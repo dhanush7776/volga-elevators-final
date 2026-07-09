@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ModuleConfig } from '@/lib/modules';
 import FormModal from '@/components/crud/FormModal';
 import ExportMenu from '@/components/crud/ExportMenu';
+import ImportMenu from '@/components/crud/ImportMenu';
 import {
   Plus,
   Search,
@@ -187,6 +188,18 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
               <Plus className="h-4 w-4" /> Add {moduleConfig.label.slice(0, -1) || moduleConfig.label}
             </button>
           )}
+          
+
+          {moduleConfig.canCreate && canWrite && (
+          <ImportMenu
+           table={moduleConfig.table}
+           label={moduleConfig.label}
+           fields={moduleConfig.fields.filter((f) => !f.relation)}
+           onImported={load}
+           />
+           )}
+
+
         </div>
       </div>
 
