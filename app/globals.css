@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-display: 'Manrope', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+}
+
+html,
+body {
+  background-color: #050b12;
+  color: #eafffb;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 212, 191, 0.35) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(45, 212, 191, 0.3);
+  border-radius: 8px;
+}
+
+@layer components {
+  .glass-panel {
+    @apply relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-glass;
+  }
+  .glass-card {
+    @apply relative rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-lg shadow-glass transition-colors hover:border-mint-500/30;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-mint-600 to-mint-400 px-4 py-2 text-sm font-semibold text-navy-950 shadow-glow-mint transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/80 backdrop-blur transition-colors hover:bg-white/[0.08] hover:text-white;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white;
+  }
+  .input-field {
+    @apply w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder-white/30 outline-none transition focus:border-mint-400/60 focus:ring-2 focus:ring-mint-400/20;
+  }
+  .table-header-cell {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-mint-200/70;
+  }
+  .table-cell {
+    @apply px-4 py-3 text-sm text-white/80;
+  }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    color: #000 !important;
+    background: #fff !important;
+  }
+  .print-area * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+}
