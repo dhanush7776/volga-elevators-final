@@ -196,6 +196,6 @@ export default function TechnicianDashboardPage() {
           )}
         </div>
       </div>
-    </div>
+    </div> 
   );
 }
