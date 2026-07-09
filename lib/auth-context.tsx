@@ -14,7 +14,7 @@ export type Profile = {
   avatar_url: string | null;
   is_active: boolean;
   hours_logged: number | null;
-  rating: number | null;
+  rating: number | null; 
 
 };
 
