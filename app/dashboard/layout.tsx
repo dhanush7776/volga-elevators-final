@@ -1,11 +1,20 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/lib/auth-context';
 import LoadingScreen from '@/components/LoadingScreen';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { loading, profile } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !profile) {
+      router.push('/login');
+    }
+  }, [loading, profile, router]);
 
   if (loading || !profile) {
     return <LoadingScreen label="Signing you in" />;
