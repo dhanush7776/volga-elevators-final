@@ -13,6 +13,9 @@ export type Profile = {
   role: 'admin' | 'technician';
   avatar_url: string | null;
   is_active: boolean;
+  hours_logged: number | null;
+  rating: number | null;
+
 };
 
 type AuthContextType = {
