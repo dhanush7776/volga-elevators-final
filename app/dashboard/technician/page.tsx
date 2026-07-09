@@ -10,13 +10,14 @@ import { Loader2, Tag, Clock, Camera, CheckCircle2, PlayCircle } from 'lucide-re
 type Job = {
   id: string;
   request_number: string;
-  status: string; // 'pending' | 'in_progress' | 'completed'
+  status: string;
   scheduled_date: string | null;
-  scheduled_time: string | null; // e.g. "13:30" -> displayed as "1:30 PM"
-  site_name: string | null; // e.g. "Apollo Hospital"
-  job_type: string | null; // e.g. "Emergency Breakdown", "Routine Maintenance", "Inspection"
+  scheduled_time: string | null;
+  site_name: string | null;
+  job_type: string | null;
   is_emergency: boolean | null;
   completion_note: string | null;
+  photo_urls: string[] | null;
 };
 
 export default function TechnicianDashboardPage() {
@@ -25,6 +26,7 @@ export default function TechnicianDashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -32,7 +34,7 @@ export default function TechnicianDashboardPage() {
       const { data } = await supabase
         .from('service_requests')
         .select(
-          'id, request_number, status, scheduled_date, scheduled_time, site_name, job_type, is_emergency, completion_note'
+          'id, request_number, status, scheduled_date, scheduled_time, site_name, job_type, is_emergency, completion_note, photo_urls'
         )
         .eq('assigned_technician_id', profile.id)
         .order('scheduled_time', { ascending: true });
@@ -52,6 +54,43 @@ export default function TechnicianDashboardPage() {
     await supabase.from('service_requests').update({ status }).eq('id', jobId);
     setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status } : j)));
     setUpdatingId(null);
+  };
+
+  const handleUploadPhotos = async (jobId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingId(jobId);
+
+    const uploadedPaths: string[] = [];
+
+    for (const file of Array.from(files)) {
+      const filePath = `${jobId}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage
+        .from('technician-documents')
+        .upload(filePath, file);
+
+      if (error) {
+        console.error('Upload failed:', error.message);
+        continue;
+      }
+      uploadedPaths.push(filePath);
+    }
+
+    if (uploadedPaths.length > 0) {
+      const job = jobs.find((j) => j.id === jobId);
+      const existing = job?.photo_urls ?? [];
+      const updated = [...existing, ...uploadedPaths];
+
+      await supabase
+        .from('service_requests')
+        .update({ photo_urls: updated })
+        .eq('id', jobId);
+
+      setJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, photo_urls: updated } : j))
+      );
+    }
+
+    setUploadingId(null);
   };
 
   const formatTime = (time: string | null) => {
@@ -74,7 +113,6 @@ export default function TechnicianDashboardPage() {
     <div>
       <Topbar title={`Welcome, ${profile?.full_name?.split(' ')[0] ?? ''}`} />
       <div className="space-y-6 p-6">
-        {/* Stat bar */}
         <div className="grid grid-cols-3 gap-4">
           <div className="glass-panel p-4 text-center">
             <p className="text-xs uppercase tracking-wide text-white/40">Jobs Done</p>
@@ -96,7 +134,6 @@ export default function TechnicianDashboardPage() {
           </div>
         </div>
 
-        {/* Today's schedule */}
         <div>
           <h3 className="mb-3 font-display text-sm font-semibold text-white">Today&apos;s Schedule</h3>
 
@@ -155,12 +192,21 @@ export default function TechnicianDashboardPage() {
 
                   {j.status === 'in_progress' && (
                     <div className="mt-4 grid grid-cols-2 gap-3">
-                      <button
-                        className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
-                      >
-                        <Camera className="h-4 w-4" />
+                      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10">
+                        {uploadingId === j.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
                         Upload Photos
-                      </button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          hidden
+                          onChange={(e) => handleUploadPhotos(j.id, e.target.files)}
+                        />
+                      </label>
                       <button
                         onClick={() => updateStatus(j.id, 'completed')}
                         disabled={updatingId === j.id}
@@ -174,6 +220,12 @@ export default function TechnicianDashboardPage() {
                         Mark Complete
                       </button>
                     </div>
+                  )}
+
+                  {j.photo_urls && j.photo_urls.length > 0 && (
+                    <p className="mt-2 text-[11px] text-white/40">
+                      {j.photo_urls.length} photo{j.photo_urls.length > 1 ? 's' : ''} uploaded
+                    </p>
                   )}
 
                   {j.status === 'pending' && (
@@ -196,6 +248,6 @@ export default function TechnicianDashboardPage() {
           )}
         </div>
       </div>
-    </div> 
+    </div>
   );
 }
