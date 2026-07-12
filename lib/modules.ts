@@ -91,7 +91,7 @@ export const MODULES: ModuleConfig[] = [
     fields: [
       { key: 'customer_code', label: 'Customer ID', type: 'text', showInForm: false },
       { key: 'name', label: 'Name', type: 'text', required: true },
-      { key: 'phone', label: 'Phone', type: 'text', required: true },
+      { key: 'phone', label: 'Phone', type: 'text', required: false },
       { key: 'email', label: 'Email', type: 'text' },
       { key: 'city', label: 'City', type: 'text' },
       { key: 'address', label: 'Address', type: 'textarea' },
