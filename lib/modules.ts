@@ -473,7 +473,7 @@ export const MODULES: ModuleConfig[] = [
     writeRoles: ['admin'],
     canCreate: true,
     canUpdate: true,
-    canDelete: false,
+    canDelete: true,
     fields: [
       { key: 'employee_code', label: 'Employee Code', type: 'text' },
       { key: 'specialization', label: 'Specialization', type: 'text' },
