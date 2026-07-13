@@ -5,16 +5,19 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { modulesForRole } from '@/lib/modules';
 import * as Icons from 'lucide-react';
-import { ArrowUpDown, LayoutDashboard, Settings, LogOut } from 'lucide-react';
+import { ArrowUpDown, LayoutDashboard, Settings, LogOut, Building2 } from 'lucide-react';
 import clsx from 'clsx';
+
+const MERGED_SLUGS = ['customers', 'buildings', 'elevators'];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
   const role = profile?.role ?? 'technician';
-  const modules = modulesForRole(role);
+  const modules = modulesForRole(role).filter((m) => !MERGED_SLUGS.includes(m.slug));
 
   const dashboardHref = role === 'admin' ? '/dashboard' : '/dashboard/technician';
+  const directoryHref = '/dashboard/elevator-directory';
 
   return (
     <aside className="no-print flex h-screen w-64 flex-shrink-0 flex-col border-r border-white/10 bg-navy-900/60 backdrop-blur-xl">
@@ -34,6 +37,13 @@ export default function Sidebar() {
           icon={<LayoutDashboard className="h-4 w-4" />}
           label="Dashboard"
           active={pathname === dashboardHref}
+        />
+
+        <NavItem
+          href={directoryHref}
+          icon={<Building2 className="h-4 w-4" />}
+          label="Elevator Directory"
+          active={pathname === directoryHref}
         />
 
         <p className="mt-4 mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/30">
