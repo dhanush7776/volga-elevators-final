@@ -6,38 +6,25 @@ import { createClient } from '@/lib/supabase/client' // adjust path if yours dif
 
 type Row = {
   key: string
-  // customer
   customer_id: string
-  customer_code: string | null
-  customer_name: string
-  customer_email: string | null
-  customer_phone: string | null
-  customer_address: string | null
-  customer_city: string | null
-  customer_gst: string | null
-  customer_active: boolean | null
-  customer_notes: string | null
-  // building
   building_id: string | null
-  building_name: string | null
-  building_address: string | null
-  building_city: string | null
-  building_pincode: string | null
-  building_total_floors: number | null
-  building_notes: string | null
-  // elevator
   elevator_id: string | null
-  elevator_code: string | null
+  code: string | null
+  name: string
+  phone: string | null
+  email: string | null
+  city: string | null
+  address: string | null
+  gst: string | null
+  active: boolean | null
+  notes: string | null
+  pincode: string | null
   elevator_type: string | null
-  brand: string | null
-  model: string | null
   capacity_kg: number | null
-  floors_served: number | null
-  installation_date: string | null
+  model: string | null
   last_service_date: string | null
   next_service_due: string | null
   status: string | null
-  elevator_notes: string | null
 }
 
 type ImportSummary = {
@@ -56,23 +43,15 @@ const STATUS_COLORS: Record<string, string> = {
 
 const IMPORT_TEMPLATE_HEADERS = [
   'customer_name',
-  'customer_phone',
-  'customer_email',
-  'customer_city',
-  'customer_address',
-  'customer_gst_number',
-  'building_name',
-  'building_address',
-  'building_city',
-  'building_pincode',
-  'total_floors',
-  'elevator_code',
+  'phone',
+  'email',
+  'city',
+  'address',
+  'gst_number',
+  'pincode',
   'elevator_type',
-  'brand',
-  'model',
   'capacity_kg',
-  'floors_served',
-  'installation_date',
+  'model',
   'status',
 ]
 
@@ -110,26 +89,18 @@ export default function ElevatorDirectoryPage() {
         deleted_at,
         buildings (
           id,
-          name,
           address,
           city,
           pincode,
-          total_floors,
-          notes,
           deleted_at,
           elevators (
             id,
-            elevator_code,
             elevator_type,
-            brand,
-            model,
             capacity_kg,
-            floors_served,
-            installation_date,
+            model,
             last_service_date,
             next_service_due,
             status,
-            notes,
             deleted_at
           )
         )
@@ -150,15 +121,13 @@ export default function ElevatorDirectoryPage() {
 
       const customerBase = {
         customer_id: c.id,
-        customer_code: c.customer_code,
-        customer_name: c.name,
-        customer_email: c.email,
-        customer_phone: c.phone,
-        customer_address: c.address,
-        customer_city: c.city,
-        customer_gst: c.gst_number,
-        customer_active: c.is_active,
-        customer_notes: c.notes,
+        code: c.customer_code,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        gst: c.gst_number,
+        active: c.is_active,
+        notes: c.notes,
       }
 
       if (activeBuildings.length === 0) {
@@ -166,24 +135,16 @@ export default function ElevatorDirectoryPage() {
           key: `${c.id}-none`,
           ...customerBase,
           building_id: null,
-          building_name: null,
-          building_address: null,
-          building_city: null,
-          building_pincode: null,
-          building_total_floors: null,
-          building_notes: null,
           elevator_id: null,
-          elevator_code: null,
+          city: c.city,
+          address: c.address,
+          pincode: null,
           elevator_type: null,
-          brand: null,
-          model: null,
           capacity_kg: null,
-          floors_served: null,
-          installation_date: null,
+          model: null,
           last_service_date: null,
           next_service_due: null,
           status: null,
-          elevator_notes: null,
         })
         return
       }
@@ -191,33 +152,21 @@ export default function ElevatorDirectoryPage() {
       activeBuildings.forEach((b: any) => {
         const activeElevators = (b.elevators ?? []).filter((e: any) => !e.deleted_at)
 
-        const buildingBase = {
-          building_id: b.id,
-          building_name: b.name,
-          building_address: b.address,
-          building_city: b.city,
-          building_pincode: b.pincode,
-          building_total_floors: b.total_floors,
-          building_notes: b.notes,
-        }
-
         if (activeElevators.length === 0) {
           flat.push({
             key: `${c.id}-${b.id}-none`,
             ...customerBase,
-            ...buildingBase,
+            building_id: b.id,
             elevator_id: null,
-            elevator_code: null,
+            city: b.city ?? c.city,
+            address: b.address ?? c.address,
+            pincode: b.pincode,
             elevator_type: null,
-            brand: null,
-            model: null,
             capacity_kg: null,
-            floors_served: null,
-            installation_date: null,
+            model: null,
             last_service_date: null,
             next_service_due: null,
             status: null,
-            elevator_notes: null,
           })
           return
         }
@@ -226,19 +175,17 @@ export default function ElevatorDirectoryPage() {
           flat.push({
             key: e.id,
             ...customerBase,
-            ...buildingBase,
+            building_id: b.id,
             elevator_id: e.id,
-            elevator_code: e.elevator_code,
+            city: b.city ?? c.city,
+            address: b.address ?? c.address,
+            pincode: b.pincode,
             elevator_type: e.elevator_type,
-            brand: e.brand,
-            model: e.model,
             capacity_kg: e.capacity_kg,
-            floors_served: e.floors_served,
-            installation_date: e.installation_date,
+            model: e.model,
             last_service_date: e.last_service_date,
             next_service_due: e.next_service_due,
             status: e.status,
-            elevator_notes: e.notes,
           })
         })
       })
@@ -261,12 +208,12 @@ export default function ElevatorDirectoryPage() {
       const q = search.toLowerCase()
       const matchesSearch =
         !q ||
-        (r.elevator_code ?? '').toLowerCase().includes(q) ||
-        (r.building_name ?? '').toLowerCase().includes(q) ||
-        r.customer_name.toLowerCase().includes(q) ||
-        (r.brand ?? '').toLowerCase().includes(q) ||
-        (r.customer_phone ?? '').toLowerCase().includes(q) ||
-        (r.customer_email ?? '').toLowerCase().includes(q)
+        r.name.toLowerCase().includes(q) ||
+        (r.code ?? '').toLowerCase().includes(q) ||
+        (r.phone ?? '').toLowerCase().includes(q) ||
+        (r.email ?? '').toLowerCase().includes(q) ||
+        (r.city ?? '').toLowerCase().includes(q) ||
+        (r.model ?? '').toLowerCase().includes(q)
       return matchesStatus && matchesSearch
     })
   }, [rows, search, statusFilter])
@@ -275,32 +222,22 @@ export default function ElevatorDirectoryPage() {
 
   function exportRowsToWorksheetData() {
     return filtered.map((r) => ({
-      'Customer Code': r.customer_code ?? '',
-      'Customer Name': r.customer_name,
-      'Customer Phone': r.customer_phone ?? '',
-      'Customer Email': r.customer_email ?? '',
-      'Customer City': r.customer_city ?? '',
-      'Customer Address': r.customer_address ?? '',
-      'Customer GST': r.customer_gst ?? '',
-      'Customer Active': r.customer_active ? 'Yes' : 'No',
-      'Customer Notes': r.customer_notes ?? '',
-      'Building Name': r.building_name ?? '',
-      'Building Address': r.building_address ?? '',
-      'Building City': r.building_city ?? '',
-      'Building Pincode': r.building_pincode ?? '',
-      'Total Floors': r.building_total_floors ?? '',
-      'Building Notes': r.building_notes ?? '',
-      'Elevator Code': r.elevator_code ?? '',
+      Code: r.code ?? '',
+      Name: r.name,
+      Phone: r.phone ?? '',
+      Email: r.email ?? '',
+      City: r.city ?? '',
+      Address: r.address ?? '',
+      GST: r.gst ?? '',
+      Active: r.active ? 'Yes' : 'No',
+      Notes: r.notes ?? '',
+      Pincode: r.pincode ?? '',
       'Elevator Type': r.elevator_type ?? '',
-      Brand: r.brand ?? '',
-      Model: r.model ?? '',
-      'Capacity (kg)': r.capacity_kg ?? '',
-      'Floors Served': r.floors_served ?? '',
-      'Installation Date': r.installation_date ?? '',
-      'Last Service Date': r.last_service_date ?? '',
-      'Next Service Due': r.next_service_due ?? '',
+      'Elevator Capacity (kg)': r.capacity_kg ?? '',
+      'Elevator Model': r.model ?? '',
+      'Last Service': r.last_service_date ?? '',
+      'Next Service': r.next_service_due ?? '',
       Status: r.status ?? '',
-      'Elevator Notes': r.elevator_notes ?? '',
     }))
   }
 
@@ -367,7 +304,6 @@ export default function ElevatorDirectoryPage() {
 
       const supabase = createClient()
       const customerCache = new Map<string, string>()
-      const buildingCache = new Map<string, string>()
 
       for (let i = 0; i < parsedRows.length; i++) {
         const raw = parsedRows[i]
@@ -400,11 +336,11 @@ export default function ElevatorDirectoryPage() {
                 .from('customers')
                 .insert({
                   name: customerName,
-                  phone: String(raw.customer_phone ?? '').trim() || null,
-                  email: String(raw.customer_email ?? '').trim() || null,
-                  city: String(raw.customer_city ?? '').trim() || null,
-                  address: String(raw.customer_address ?? '').trim() || null,
-                  gst_number: String(raw.customer_gst_number ?? '').trim() || null,
+                  phone: String(raw.phone ?? '').trim() || null,
+                  email: String(raw.email ?? '').trim() || null,
+                  city: String(raw.city ?? '').trim() || null,
+                  address: String(raw.address ?? '').trim() || null,
+                  gst_number: String(raw.gst_number ?? '').trim() || null,
                 })
                 .select('id')
                 .single()
@@ -416,94 +352,59 @@ export default function ElevatorDirectoryPage() {
             customerCache.set(customerName.toLowerCase(), customerId!)
           }
 
-          // 2) find or create building
-          const buildingName = String(raw.building_name ?? '').trim()
+          // 2) find or create a single building for this customer (address/city/pincode)
+          const address = String(raw.address ?? '').trim()
+          const city = String(raw.city ?? '').trim()
+          const pincode = String(raw.pincode ?? '').trim()
           let buildingId: string | null = null
 
-          if (buildingName) {
-            const buildingCacheKey = `${customerId}|${buildingName.toLowerCase()}`
-            buildingId = buildingCache.get(buildingCacheKey) ?? null
+          if (address || city || pincode) {
+            const { data: existingBuilding, error: findBldErr } = await supabase
+              .from('buildings')
+              .select('id')
+              .eq('customer_id', customerId)
+              .is('deleted_at', null)
+              .maybeSingle()
 
-            if (!buildingId) {
-              const { data: existingBuilding, error: findBldErr } = await supabase
+            if (findBldErr) throw findBldErr
+
+            if (existingBuilding) {
+              buildingId = existingBuilding.id
+            } else {
+              const { data: newBuilding, error: bldInsertErr } = await supabase
                 .from('buildings')
+                .insert({
+                  customer_id: customerId,
+                  name: `${customerName} Site`,
+                  address: address || 'N/A',
+                  city: city || null,
+                  pincode: pincode || null,
+                })
                 .select('id')
-                .eq('customer_id', customerId)
-                .ilike('name', buildingName)
-                .is('deleted_at', null)
-                .maybeSingle()
+                .single()
 
-              if (findBldErr) throw findBldErr
-
-              if (existingBuilding) {
-                buildingId = existingBuilding.id
-              } else {
-                const { data: newBuilding, error: bldInsertErr } = await supabase
-                  .from('buildings')
-                  .insert({
-                    customer_id: customerId,
-                    name: buildingName,
-                    address: String(raw.building_address ?? '').trim() || 'N/A',
-                    city: String(raw.building_city ?? '').trim() || null,
-                    pincode: String(raw.building_pincode ?? '').trim() || null,
-                    total_floors: raw.total_floors ? Number(raw.total_floors) : null,
-                  })
-                  .select('id')
-                  .single()
-
-                if (bldInsertErr) throw bldInsertErr
-                buildingId = newBuilding.id
-                summary.buildingsCreated++
-              }
-              buildingCache.set(buildingCacheKey, buildingId!)
+              if (bldInsertErr) throw bldInsertErr
+              buildingId = newBuilding.id
+              summary.buildingsCreated++
             }
           }
 
-          // 3) find or create/update elevator
+          // 3) create elevator if type/model/capacity/status info given
           const elevatorType = String(raw.elevator_type ?? '').trim()
-          const brand = String(raw.brand ?? '').trim()
-          const elevatorCode = String(raw.elevator_code ?? '').trim()
-          const hasElevatorInfo = elevatorType || brand || elevatorCode
+          const model = String(raw.model ?? '').trim()
+          const hasElevatorInfo = elevatorType || model || raw.capacity_kg
 
           if (buildingId && hasElevatorInfo) {
-            const elevatorPayload: Record<string, any> = {
+            const { error: insertErr } = await supabase.from('elevators').insert({
               building_id: buildingId,
               elevator_type: elevatorType || 'Passenger',
-              brand: brand || null,
-              model: String(raw.model ?? '').trim() || null,
+              model: model || null,
               capacity_kg: raw.capacity_kg ? Number(raw.capacity_kg) : null,
-              floors_served: raw.floors_served ? Number(raw.floors_served) : null,
-              installation_date: String(raw.installation_date ?? '').trim() || null,
               status: String(raw.status ?? '').trim() || 'operational',
-            }
+            })
 
-            if (elevatorCode) {
-              const { data: existingElevator, error: findElevErr } = await supabase
-                .from('elevators')
-                .select('id')
-                .eq('elevator_code', elevatorCode)
-                .maybeSingle()
-
-              if (findElevErr) throw findElevErr
-
-              if (existingElevator) {
-                const { error: updateErr } = await supabase
-                  .from('elevators')
-                  .update(elevatorPayload)
-                  .eq('id', existingElevator.id)
-
-                if (updateErr) throw updateErr
-                summary.elevatorsUpdated++
-              } else {
-                const { error: insertErr } = await supabase.from('elevators').insert(elevatorPayload)
-                if (insertErr) throw insertErr
-                summary.elevatorsCreated++
-              }
-            } else {
-              const { error: insertErr } = await supabase.from('elevators').insert(elevatorPayload)
-              if (insertErr) throw insertErr
-              summary.elevatorsCreated++
-            }
+            if (insertErr) throw insertErr
+            summary.elevatorsCreated++
           }
         } catch (rowErr: any) {
           summary.errors.push(`Row ${rowNum}: ${rowErr.message ?? 'unknown error'}`)
@@ -541,7 +442,7 @@ export default function ElevatorDirectoryPage() {
             Elevator Directory
           </h1>
           <p className="text-sm text-slate-400 mt-1 print:text-black">
-            Full customer, building, and elevator details in one table
+            Customer, site, and elevator details in one table
           </p>
         </div>
 
@@ -585,7 +486,7 @@ export default function ElevatorDirectoryPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search elevator, building, customer, brand, phone, email…"
+          placeholder="Search name, code, phone, email, city, model…"
           className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
         />
         <select
@@ -605,11 +506,6 @@ export default function ElevatorDirectoryPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm whitespace-nowrap">
             <thead>
-              <tr className="border-b border-white/10 text-left text-slate-500 text-[10px] uppercase tracking-wider">
-                <th className="px-4 pt-3" colSpan={9}>Customer</th>
-                <th className="px-4 pt-3 border-l border-white/10" colSpan={6}>Building</th>
-                <th className="px-4 pt-3 border-l border-white/10" colSpan={11}>Elevator</th>
-              </tr>
               <tr className="border-b border-white/10 text-left text-slate-400">
                 <th className="px-4 py-3 font-medium">Code</th>
                 <th className="px-4 py-3 font-medium">Name</th>
@@ -620,69 +516,42 @@ export default function ElevatorDirectoryPage() {
                 <th className="px-4 py-3 font-medium">GST</th>
                 <th className="px-4 py-3 font-medium">Active</th>
                 <th className="px-4 py-3 font-medium">Notes</th>
-
-                <th className="px-4 py-3 font-medium border-l border-white/10">Name</th>
-                <th className="px-4 py-3 font-medium">Address</th>
-                <th className="px-4 py-3 font-medium">City</th>
                 <th className="px-4 py-3 font-medium">Pincode</th>
-                <th className="px-4 py-3 font-medium">Floors</th>
-                <th className="px-4 py-3 font-medium">Notes</th>
-
-                <th className="px-4 py-3 font-medium border-l border-white/10">Code</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Brand</th>
+                <th className="px-4 py-3 font-medium">Elevator Type</th>
+                <th className="px-4 py-3 font-medium">Capacity</th>
                 <th className="px-4 py-3 font-medium">Model</th>
-                <th className="px-4 py-3 font-medium">Capacity (kg)</th>
-                <th className="px-4 py-3 font-medium">Floors Served</th>
-                <th className="px-4 py-3 font-medium">Installed</th>
                 <th className="px-4 py-3 font-medium">Last Service</th>
                 <th className="px-4 py-3 font-medium">Next Service</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Notes</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={26} className="px-4 py-8 text-center text-slate-500">Loading…</td>
+                  <td colSpan={16} className="px-4 py-8 text-center text-slate-500">Loading…</td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={26} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
+                  <td colSpan={16} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
                 </tr>
               ) : (
                 filtered.map((r) => (
                   <tr key={r.key} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
-                    <td className="px-4 py-3 text-slate-300">{r.customer_code ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-white font-medium">{r.customer_name}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.customer_phone ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.customer_email ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.customer_city ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.customer_address ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.customer_gst ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.code ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-white font-medium">{r.name}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.phone ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.email ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.city ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.address ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.gst ?? <Dash />}</td>
                     <td className="px-4 py-3">
-                      {r.customer_active ? (
-                        <span className="text-emerald-300">Yes</span>
-                      ) : (
-                        <span className="text-slate-500">No</span>
-                      )}
+                      {r.active ? <span className="text-emerald-300">Yes</span> : <span className="text-slate-500">No</span>}
                     </td>
-                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.customer_notes ?? <Dash />}</td>
-
-                    <td className="px-4 py-3 text-slate-300 border-l border-white/5">{r.building_name ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.building_address ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.building_city ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.building_pincode ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.building_total_floors ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.building_notes ?? <Dash />}</td>
-
-                    <td className="px-4 py-3 font-medium text-white border-l border-white/5">{r.elevator_code ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.notes ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.pincode ?? <Dash />}</td>
                     <td className="px-4 py-3 text-slate-300">{r.elevator_type ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.brand ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.model ?? <Dash />}</td>
                     <td className="px-4 py-3 text-slate-300">{r.capacity_kg ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.floors_served ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-400">{r.installation_date ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.model ?? <Dash />}</td>
                     <td className="px-4 py-3 text-slate-400">{r.last_service_date ?? <Dash />}</td>
                     <td className="px-4 py-3 text-slate-400">{r.next_service_due ?? <Dash />}</td>
                     <td className="px-4 py-3">
@@ -696,7 +565,6 @@ export default function ElevatorDirectoryPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.elevator_notes ?? <Dash />}</td>
                   </tr>
                 ))
               )}
@@ -716,7 +584,7 @@ export default function ElevatorDirectoryPage() {
               <div>
                 <h2 className="text-lg font-semibold text-white">Import Data</h2>
                 <p className="text-sm text-slate-400 mt-1">
-                  Upload a .xlsx or .csv file. Matches existing customers/buildings by name, and elevators by elevator code.
+                  Upload a .xlsx or .csv file. Matches existing customers by name.
                 </p>
               </div>
               <button
@@ -746,7 +614,7 @@ export default function ElevatorDirectoryPage() {
               <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
                 <p className="text-white mb-1">
                   ✅ {importSummary.customersCreated} customers created, {importSummary.buildingsCreated} buildings created,{' '}
-                  {importSummary.elevatorsCreated} elevators created, {importSummary.elevatorsUpdated} elevators updated.
+                  {importSummary.elevatorsCreated} elevators created.
                 </p>
                 {importSummary.errors.length > 0 && (
                   <div className="mt-2">
