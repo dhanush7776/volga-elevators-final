@@ -6,12 +6,26 @@ import { createClient } from '@/lib/supabase/client' // adjust path if yours dif
 
 type Row = {
   key: string
+  // customer
   customer_id: string
+  customer_code: string | null
   customer_name: string
+  customer_email: string | null
   customer_phone: string | null
+  customer_address: string | null
+  customer_city: string | null
+  customer_gst: string | null
+  customer_active: boolean | null
+  customer_notes: string | null
+  // building
   building_id: string | null
   building_name: string | null
+  building_address: string | null
   building_city: string | null
+  building_pincode: string | null
+  building_total_floors: number | null
+  building_notes: string | null
+  // elevator
   elevator_id: string | null
   elevator_code: string | null
   elevator_type: string | null
@@ -19,8 +33,11 @@ type Row = {
   model: string | null
   capacity_kg: number | null
   floors_served: number | null
-  status: string | null
+  installation_date: string | null
+  last_service_date: string | null
   next_service_due: string | null
+  status: string | null
+  elevator_notes: string | null
 }
 
 type ImportSummary = {
@@ -40,17 +57,26 @@ const STATUS_COLORS: Record<string, string> = {
 const IMPORT_TEMPLATE_HEADERS = [
   'customer_name',
   'customer_phone',
+  'customer_email',
   'customer_city',
+  'customer_address',
+  'customer_gst_number',
   'building_name',
+  'building_address',
   'building_city',
+  'building_pincode',
+  'total_floors',
   'elevator_code',
   'elevator_type',
   'brand',
   'model',
   'capacity_kg',
   'floors_served',
+  'installation_date',
   'status',
 ]
+
+const Dash = () => <span className="text-slate-600">—</span>
 
 export default function ElevatorDirectoryPage() {
   const [rows, setRows] = useState<Row[]>([])
@@ -72,13 +98,24 @@ export default function ElevatorDirectoryPage() {
       .from('customers')
       .select(`
         id,
+        customer_code,
         name,
+        email,
         phone,
+        address,
+        city,
+        gst_number,
+        is_active,
+        notes,
         deleted_at,
         buildings (
           id,
           name,
+          address,
           city,
+          pincode,
+          total_floors,
+          notes,
           deleted_at,
           elevators (
             id,
@@ -88,8 +125,11 @@ export default function ElevatorDirectoryPage() {
             model,
             capacity_kg,
             floors_served,
-            status,
+            installation_date,
+            last_service_date,
             next_service_due,
+            status,
+            notes,
             deleted_at
           )
         )
@@ -108,15 +148,30 @@ export default function ElevatorDirectoryPage() {
     ;(data ?? []).forEach((c: any) => {
       const activeBuildings = (c.buildings ?? []).filter((b: any) => !b.deleted_at)
 
+      const customerBase = {
+        customer_id: c.id,
+        customer_code: c.customer_code,
+        customer_name: c.name,
+        customer_email: c.email,
+        customer_phone: c.phone,
+        customer_address: c.address,
+        customer_city: c.city,
+        customer_gst: c.gst_number,
+        customer_active: c.is_active,
+        customer_notes: c.notes,
+      }
+
       if (activeBuildings.length === 0) {
         flat.push({
           key: `${c.id}-none`,
-          customer_id: c.id,
-          customer_name: c.name,
-          customer_phone: c.phone,
+          ...customerBase,
           building_id: null,
           building_name: null,
+          building_address: null,
           building_city: null,
+          building_pincode: null,
+          building_total_floors: null,
+          building_notes: null,
           elevator_id: null,
           elevator_code: null,
           elevator_type: null,
@@ -124,8 +179,11 @@ export default function ElevatorDirectoryPage() {
           model: null,
           capacity_kg: null,
           floors_served: null,
-          status: null,
+          installation_date: null,
+          last_service_date: null,
           next_service_due: null,
+          status: null,
+          elevator_notes: null,
         })
         return
       }
@@ -133,15 +191,21 @@ export default function ElevatorDirectoryPage() {
       activeBuildings.forEach((b: any) => {
         const activeElevators = (b.elevators ?? []).filter((e: any) => !e.deleted_at)
 
+        const buildingBase = {
+          building_id: b.id,
+          building_name: b.name,
+          building_address: b.address,
+          building_city: b.city,
+          building_pincode: b.pincode,
+          building_total_floors: b.total_floors,
+          building_notes: b.notes,
+        }
+
         if (activeElevators.length === 0) {
           flat.push({
             key: `${c.id}-${b.id}-none`,
-            customer_id: c.id,
-            customer_name: c.name,
-            customer_phone: c.phone,
-            building_id: b.id,
-            building_name: b.name,
-            building_city: b.city,
+            ...customerBase,
+            ...buildingBase,
             elevator_id: null,
             elevator_code: null,
             elevator_type: null,
@@ -149,8 +213,11 @@ export default function ElevatorDirectoryPage() {
             model: null,
             capacity_kg: null,
             floors_served: null,
-            status: null,
+            installation_date: null,
+            last_service_date: null,
             next_service_due: null,
+            status: null,
+            elevator_notes: null,
           })
           return
         }
@@ -158,12 +225,8 @@ export default function ElevatorDirectoryPage() {
         activeElevators.forEach((e: any) => {
           flat.push({
             key: e.id,
-            customer_id: c.id,
-            customer_name: c.name,
-            customer_phone: c.phone,
-            building_id: b.id,
-            building_name: b.name,
-            building_city: b.city,
+            ...customerBase,
+            ...buildingBase,
             elevator_id: e.id,
             elevator_code: e.elevator_code,
             elevator_type: e.elevator_type,
@@ -171,8 +234,11 @@ export default function ElevatorDirectoryPage() {
             model: e.model,
             capacity_kg: e.capacity_kg,
             floors_served: e.floors_served,
-            status: e.status,
+            installation_date: e.installation_date,
+            last_service_date: e.last_service_date,
             next_service_due: e.next_service_due,
+            status: e.status,
+            elevator_notes: e.notes,
           })
         })
       })
@@ -198,7 +264,9 @@ export default function ElevatorDirectoryPage() {
         (r.elevator_code ?? '').toLowerCase().includes(q) ||
         (r.building_name ?? '').toLowerCase().includes(q) ||
         r.customer_name.toLowerCase().includes(q) ||
-        (r.brand ?? '').toLowerCase().includes(q)
+        (r.brand ?? '').toLowerCase().includes(q) ||
+        (r.customer_phone ?? '').toLowerCase().includes(q) ||
+        (r.customer_email ?? '').toLowerCase().includes(q)
       return matchesStatus && matchesSearch
     })
   }, [rows, search, statusFilter])
@@ -207,18 +275,32 @@ export default function ElevatorDirectoryPage() {
 
   function exportRowsToWorksheetData() {
     return filtered.map((r) => ({
-      Customer: r.customer_name,
+      'Customer Code': r.customer_code ?? '',
+      'Customer Name': r.customer_name,
       'Customer Phone': r.customer_phone ?? '',
-      Building: r.building_name ?? '',
+      'Customer Email': r.customer_email ?? '',
+      'Customer City': r.customer_city ?? '',
+      'Customer Address': r.customer_address ?? '',
+      'Customer GST': r.customer_gst ?? '',
+      'Customer Active': r.customer_active ? 'Yes' : 'No',
+      'Customer Notes': r.customer_notes ?? '',
+      'Building Name': r.building_name ?? '',
+      'Building Address': r.building_address ?? '',
       'Building City': r.building_city ?? '',
+      'Building Pincode': r.building_pincode ?? '',
+      'Total Floors': r.building_total_floors ?? '',
+      'Building Notes': r.building_notes ?? '',
       'Elevator Code': r.elevator_code ?? '',
       'Elevator Type': r.elevator_type ?? '',
       Brand: r.brand ?? '',
       Model: r.model ?? '',
       'Capacity (kg)': r.capacity_kg ?? '',
       'Floors Served': r.floors_served ?? '',
-      Status: r.status ?? '',
+      'Installation Date': r.installation_date ?? '',
+      'Last Service Date': r.last_service_date ?? '',
       'Next Service Due': r.next_service_due ?? '',
+      Status: r.status ?? '',
+      'Elevator Notes': r.elevator_notes ?? '',
     }))
   }
 
@@ -284,14 +366,12 @@ export default function ElevatorDirectoryPage() {
       }
 
       const supabase = createClient()
-
-      // in-memory caches to avoid re-querying/re-creating within this batch
-      const customerCache = new Map<string, string>() // name(lowercase) -> id
-      const buildingCache = new Map<string, string>() // customerId|name(lowercase) -> id
+      const customerCache = new Map<string, string>()
+      const buildingCache = new Map<string, string>()
 
       for (let i = 0; i < parsedRows.length; i++) {
         const raw = parsedRows[i]
-        const rowNum = i + 2 // account for header row
+        const rowNum = i + 2
 
         const customerName = String(raw.customer_name ?? '').trim()
         if (!customerName) {
@@ -321,7 +401,10 @@ export default function ElevatorDirectoryPage() {
                 .insert({
                   name: customerName,
                   phone: String(raw.customer_phone ?? '').trim() || null,
+                  email: String(raw.customer_email ?? '').trim() || null,
                   city: String(raw.customer_city ?? '').trim() || null,
+                  address: String(raw.customer_address ?? '').trim() || null,
+                  gst_number: String(raw.customer_gst_number ?? '').trim() || null,
                 })
                 .select('id')
                 .single()
@@ -333,7 +416,7 @@ export default function ElevatorDirectoryPage() {
             customerCache.set(customerName.toLowerCase(), customerId!)
           }
 
-          // 2) find or create building (only if a building_name was given)
+          // 2) find or create building
           const buildingName = String(raw.building_name ?? '').trim()
           let buildingId: string | null = null
 
@@ -360,8 +443,10 @@ export default function ElevatorDirectoryPage() {
                   .insert({
                     customer_id: customerId,
                     name: buildingName,
-                    address: String(raw.building_city ?? '').trim() || 'N/A',
+                    address: String(raw.building_address ?? '').trim() || 'N/A',
                     city: String(raw.building_city ?? '').trim() || null,
+                    pincode: String(raw.building_pincode ?? '').trim() || null,
+                    total_floors: raw.total_floors ? Number(raw.total_floors) : null,
                   })
                   .select('id')
                   .single()
@@ -374,7 +459,7 @@ export default function ElevatorDirectoryPage() {
             }
           }
 
-          // 3) find or create/update elevator (only if building exists and elevator info given)
+          // 3) find or create/update elevator
           const elevatorType = String(raw.elevator_type ?? '').trim()
           const brand = String(raw.brand ?? '').trim()
           const elevatorCode = String(raw.elevator_code ?? '').trim()
@@ -388,6 +473,7 @@ export default function ElevatorDirectoryPage() {
               model: String(raw.model ?? '').trim() || null,
               capacity_kg: raw.capacity_kg ? Number(raw.capacity_kg) : null,
               floors_served: raw.floors_served ? Number(raw.floors_served) : null,
+              installation_date: String(raw.installation_date ?? '').trim() || null,
               status: String(raw.status ?? '').trim() || 'operational',
             }
 
@@ -409,18 +495,12 @@ export default function ElevatorDirectoryPage() {
                 if (updateErr) throw updateErr
                 summary.elevatorsUpdated++
               } else {
-                const { error: insertErr } = await supabase
-                  .from('elevators')
-                  .insert(elevatorPayload)
-
+                const { error: insertErr } = await supabase.from('elevators').insert(elevatorPayload)
                 if (insertErr) throw insertErr
                 summary.elevatorsCreated++
               }
             } else {
-              const { error: insertErr } = await supabase
-                .from('elevators')
-                .insert(elevatorPayload)
-
+              const { error: insertErr } = await supabase.from('elevators').insert(elevatorPayload)
               if (insertErr) throw insertErr
               summary.elevatorsCreated++
             }
@@ -441,7 +521,7 @@ export default function ElevatorDirectoryPage() {
   function onFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) handleImportFile(file)
-    e.target.value = '' // allow re-selecting the same file later
+    e.target.value = ''
   }
 
   return (
@@ -461,7 +541,7 @@ export default function ElevatorDirectoryPage() {
             Elevator Directory
           </h1>
           <p className="text-sm text-slate-400 mt-1 print:text-black">
-            Every customer, with their buildings and elevators
+            Full customer, building, and elevator details in one table
           </p>
         </div>
 
@@ -482,16 +562,10 @@ export default function ElevatorDirectoryPage() {
             </button>
             {exportMenuOpen && (
               <div className="absolute right-0 mt-2 w-40 rounded-xl border border-white/10 bg-[#111621] shadow-xl z-10 overflow-hidden">
-                <button
-                  onClick={handleExportExcel}
-                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5"
-                >
+                <button onClick={handleExportExcel} className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5">
                   Export as Excel
                 </button>
-                <button
-                  onClick={handleExportCSV}
-                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5"
-                >
+                <button onClick={handleExportCSV} className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5">
                   Export as CSV
                 </button>
               </div>
@@ -511,7 +585,7 @@ export default function ElevatorDirectoryPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search elevator, building, customer, brand…"
+          placeholder="Search elevator, building, customer, brand, phone, email…"
           className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
         />
         <select
@@ -529,67 +603,91 @@ export default function ElevatorDirectoryPage() {
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden print:border-black print:bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm whitespace-nowrap">
             <thead>
+              <tr className="border-b border-white/10 text-left text-slate-500 text-[10px] uppercase tracking-wider">
+                <th className="px-4 pt-3" colSpan={9}>Customer</th>
+                <th className="px-4 pt-3 border-l border-white/10" colSpan={6}>Building</th>
+                <th className="px-4 pt-3 border-l border-white/10" colSpan={11}>Elevator</th>
+              </tr>
               <tr className="border-b border-white/10 text-left text-slate-400">
-                <th className="px-4 py-3 font-medium">Customer</th>
-                <th className="px-4 py-3 font-medium">Building</th>
-                <th className="px-4 py-3 font-medium">Elevator</th>
-                <th className="px-4 py-3 font-medium">Type / Brand</th>
+                <th className="px-4 py-3 font-medium">Code</th>
+                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Phone</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">City</th>
+                <th className="px-4 py-3 font-medium">Address</th>
+                <th className="px-4 py-3 font-medium">GST</th>
+                <th className="px-4 py-3 font-medium">Active</th>
+                <th className="px-4 py-3 font-medium">Notes</th>
+
+                <th className="px-4 py-3 font-medium border-l border-white/10">Name</th>
+                <th className="px-4 py-3 font-medium">Address</th>
+                <th className="px-4 py-3 font-medium">City</th>
+                <th className="px-4 py-3 font-medium">Pincode</th>
+                <th className="px-4 py-3 font-medium">Floors</th>
+                <th className="px-4 py-3 font-medium">Notes</th>
+
+                <th className="px-4 py-3 font-medium border-l border-white/10">Code</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium">Brand</th>
+                <th className="px-4 py-3 font-medium">Model</th>
+                <th className="px-4 py-3 font-medium">Capacity (kg)</th>
+                <th className="px-4 py-3 font-medium">Floors Served</th>
+                <th className="px-4 py-3 font-medium">Installed</th>
+                <th className="px-4 py-3 font-medium">Last Service</th>
                 <th className="px-4 py-3 font-medium">Next Service</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Notes</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                    Loading…
-                  </td>
+                  <td colSpan={26} className="px-4 py-8 text-center text-slate-500">Loading…</td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                    No rows match your search.
-                  </td>
+                  <td colSpan={26} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
                 </tr>
               ) : (
                 filtered.map((r) => (
-                  <tr
-                    key={r.key}
-                    className="border-b border-white/5 hover:bg-white/[0.04] transition-colors"
-                  >
-                    <td className="px-4 py-3 text-white">
-                      {r.customer_name}
-                      {r.customer_phone && (
-                        <div className="text-xs text-slate-500">{r.customer_phone}</div>
+                  <tr key={r.key} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
+                    <td className="px-4 py-3 text-slate-300">{r.customer_code ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-white font-medium">{r.customer_name}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.customer_phone ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.customer_email ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.customer_city ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.customer_address ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.customer_gst ?? <Dash />}</td>
+                    <td className="px-4 py-3">
+                      {r.customer_active ? (
+                        <span className="text-emerald-300">Yes</span>
+                      ) : (
+                        <span className="text-slate-500">No</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-300">
-                      {r.building_name ?? <span className="text-slate-600">—</span>}
-                      {r.building_city && (
-                        <span className="text-slate-500"> · {r.building_city}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-white">
-                      {r.elevator_code ?? <span className="text-slate-600 font-normal">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-300">
-                      {r.elevator_type ?? <span className="text-slate-600">—</span>}
-                      {r.brand && <span className="text-slate-500"> · {r.brand}</span>}
-                      {r.model && <span className="text-slate-500"> {r.model}</span>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-400">
-                      {r.next_service_due ?? '—'}
-                    </td>
+                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.customer_notes ?? <Dash />}</td>
+
+                    <td className="px-4 py-3 text-slate-300 border-l border-white/5">{r.building_name ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.building_address ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.building_city ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.building_pincode ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.building_total_floors ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.building_notes ?? <Dash />}</td>
+
+                    <td className="px-4 py-3 font-medium text-white border-l border-white/5">{r.elevator_code ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.elevator_type ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.brand ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.model ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.capacity_kg ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-300">{r.floors_served ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400">{r.installation_date ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400">{r.last_service_date ?? <Dash />}</td>
+                    <td className="px-4 py-3 text-slate-400">{r.next_service_due ?? <Dash />}</td>
                     <td className="px-4 py-3">
                       {r.status ? (
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-full text-xs border ${
-                            STATUS_COLORS[r.status] ??
-                            'bg-slate-500/15 text-slate-300 border-slate-500/30'
-                          }`}
-                        >
+                        <span className={`inline-block px-2.5 py-1 rounded-full text-xs border ${STATUS_COLORS[r.status] ?? 'bg-slate-500/15 text-slate-300 border-slate-500/30'}`}>
                           {r.status.replace('_', ' ')}
                         </span>
                       ) : (
@@ -598,6 +696,7 @@ export default function ElevatorDirectoryPage() {
                         </span>
                       )}
                     </td>
+                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.elevator_notes ?? <Dash />}</td>
                   </tr>
                 ))
               )}
@@ -610,7 +709,6 @@ export default function ElevatorDirectoryPage() {
         {filtered.length} row{filtered.length !== 1 ? 's' : ''}
       </div>
 
-      {/* IMPORT MODAL */}
       {importOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
           <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1119] p-6">
@@ -618,25 +716,18 @@ export default function ElevatorDirectoryPage() {
               <div>
                 <h2 className="text-lg font-semibold text-white">Import Data</h2>
                 <p className="text-sm text-slate-400 mt-1">
-                  Upload a .xlsx or .csv file. Matches existing customers/buildings by
-                  name, and elevators by elevator code.
+                  Upload a .xlsx or .csv file. Matches existing customers/buildings by name, and elevators by elevator code.
                 </p>
               </div>
               <button
-                onClick={() => {
-                  setImportOpen(false)
-                  setImportSummary(null)
-                }}
+                onClick={() => { setImportOpen(false); setImportSummary(null) }}
                 className="text-slate-400 hover:text-white"
               >
                 ✕
               </button>
             </div>
 
-            <button
-              onClick={handleDownloadTemplate}
-              className="text-sm text-[#A7FEEB] hover:underline mb-4"
-            >
+            <button onClick={handleDownloadTemplate} className="text-sm text-[#A7FEEB] hover:underline mb-4">
               Download import template
             </button>
 
@@ -649,27 +740,19 @@ export default function ElevatorDirectoryPage() {
               className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#A7FEEB]/15 file:text-[#A7FEEB] hover:file:bg-[#A7FEEB]/25"
             />
 
-            {importing && (
-              <p className="mt-4 text-sm text-slate-400">Importing… this may take a moment.</p>
-            )}
+            {importing && <p className="mt-4 text-sm text-slate-400">Importing… this may take a moment.</p>}
 
             {importSummary && (
               <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
                 <p className="text-white mb-1">
-                  ✅ {importSummary.customersCreated} customers created,{' '}
-                  {importSummary.buildingsCreated} buildings created,{' '}
-                  {importSummary.elevatorsCreated} elevators created,{' '}
-                  {importSummary.elevatorsUpdated} elevators updated.
+                  ✅ {importSummary.customersCreated} customers created, {importSummary.buildingsCreated} buildings created,{' '}
+                  {importSummary.elevatorsCreated} elevators created, {importSummary.elevatorsUpdated} elevators updated.
                 </p>
                 {importSummary.errors.length > 0 && (
                   <div className="mt-2">
-                    <p className="text-rose-400 mb-1">
-                      {importSummary.errors.length} row(s) had issues:
-                    </p>
+                    <p className="text-rose-400 mb-1">{importSummary.errors.length} row(s) had issues:</p>
                     <ul className="text-xs text-rose-300 max-h-32 overflow-y-auto list-disc pl-4 space-y-0.5">
-                      {importSummary.errors.map((e, i) => (
-                        <li key={i}>{e}</li>
-                      ))}
+                      {importSummary.errors.map((e, i) => <li key={i}>{e}</li>)}
                     </ul>
                   </div>
                 )}
