@@ -471,7 +471,7 @@ export const MODULES: ModuleConfig[] = [
     defaultSort: { key: 'created_at', direction: 'desc' },
     roles: ['admin'],
     writeRoles: ['admin'],
-    canCreate: false,
+    canCreate: true,
     canUpdate: true,
     canDelete: false,
     fields: [
