@@ -577,4 +577,107 @@ export default function ElevatorDirectoryPage() {
                     <td className="px-4 py-3 text-slate-300">
                       {r.elevator_type ?? <span className="text-slate-600">—</span>}
                       {r.brand && <span className="text-slate-500"> · {r.brand}</span>}
-              
+                      {r.model && <span className="text-slate-500"> {r.model}</span>}
+                    </td>
+                    <td className="px-4 py-3 text-slate-400">
+                      {r.next_service_due ?? '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.status ? (
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-xs border ${
+                            STATUS_COLORS[r.status] ??
+                            'bg-slate-500/15 text-slate-300 border-slate-500/30'
+                          }`}
+                        >
+                          {r.status.replace('_', ' ')}
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2.5 py-1 rounded-full text-xs border bg-white/5 text-slate-500 border-white/10">
+                          no elevator yet
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-3 text-xs text-slate-500 no-print">
+        {filtered.length} row{filtered.length !== 1 ? 's' : ''}
+      </div>
+
+      {/* IMPORT MODAL */}
+      {importOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1119] p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Import Data</h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  Upload a .xlsx or .csv file. Matches existing customers/buildings by
+                  name, and elevators by elevator code.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setImportOpen(false)
+                  setImportSummary(null)
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <button
+              onClick={handleDownloadTemplate}
+              className="text-sm text-[#A7FEEB] hover:underline mb-4"
+            >
+              Download import template
+            </button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={onFileSelected}
+              disabled={importing}
+              className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#A7FEEB]/15 file:text-[#A7FEEB] hover:file:bg-[#A7FEEB]/25"
+            />
+
+            {importing && (
+              <p className="mt-4 text-sm text-slate-400">Importing… this may take a moment.</p>
+            )}
+
+            {importSummary && (
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+                <p className="text-white mb-1">
+                  ✅ {importSummary.customersCreated} customers created,{' '}
+                  {importSummary.buildingsCreated} buildings created,{' '}
+                  {importSummary.elevatorsCreated} elevators created,{' '}
+                  {importSummary.elevatorsUpdated} elevators updated.
+                </p>
+                {importSummary.errors.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-rose-400 mb-1">
+                      {importSummary.errors.length} row(s) had issues:
+                    </p>
+                    <ul className="text-xs text-rose-300 max-h-32 overflow-y-auto list-disc pl-4 space-y-0.5">
+                      {importSummary.errors.map((e, i) => (
+                        <li key={i}>{e}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
