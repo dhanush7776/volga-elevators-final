@@ -35,6 +35,17 @@ type ImportSummary = {
   errors: string[]
 }
 
+type DatePreset =
+  | 'today'
+  | 'yesterday'
+  | 'this_week'
+  | 'last_week'
+  | 'this_month'
+  | 'last_month'
+  | 'last_3_months'
+  | 'all_time'
+  | 'custom'
+
 const STATUS_COLORS: Record<string, string> = {
   operational: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
   under_maintenance: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
@@ -57,6 +68,87 @@ const IMPORT_TEMPLATE_HEADERS = [
 
 const Dash = () => <span className="text-slate-600">—</span>
 
+function startOfDay(d: Date) {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x
+}
+function endOfDay(d: Date) {
+  const x = new Date(d)
+  x.setHours(23, 59, 59, 999)
+  return x
+}
+function startOfWeek(d: Date) {
+  const x = startOfDay(d)
+  const day = x.getDay() // 0 = Sunday
+  x.setDate(x.getDate() - day)
+  return x
+}
+function startOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), 1)
+}
+function endOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
+}
+
+function computeDateRange(
+  preset: DatePreset,
+  customStart: string,
+  customEnd: string
+): { start: Date | null; end: Date | null } {
+  const now = new Date()
+
+  switch (preset) {
+    case 'today':
+      return { start: startOfDay(now), end: endOfDay(now) }
+    case 'yesterday': {
+      const y = new Date(now)
+      y.setDate(y.getDate() - 1)
+      return { start: startOfDay(y), end: endOfDay(y) }
+    }
+    case 'this_week':
+      return { start: startOfWeek(now), end: endOfDay(now) }
+    case 'last_week': {
+      const startThis = startOfWeek(now)
+      const endLast = new Date(startThis)
+      endLast.setMilliseconds(-1)
+      const startLast = new Date(startThis)
+      startLast.setDate(startLast.getDate() - 7)
+      return { start: startLast, end: endLast }
+    }
+    case 'this_month':
+      return { start: startOfMonth(now), end: endOfMonth(now) }
+    case 'last_month': {
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      return { start: startOfMonth(lastMonthDate), end: endOfMonth(lastMonthDate) }
+    }
+    case 'last_3_months': {
+      const start = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
+      return { start: startOfDay(start), end: endOfDay(now) }
+    }
+    case 'custom': {
+      const start = customStart ? startOfDay(new Date(customStart)) : null
+      const end = customEnd ? endOfDay(new Date(customEnd)) : null
+      return { start, end }
+    }
+    case 'all_time':
+    default:
+      return { start: null, end: null }
+  }
+}
+
+const PRESET_OPTIONS: { value: DatePreset; label: string }[] = [
+  { value: 'all_time', label: 'All time' },
+  { value: 'today', label: 'Today' },
+  { value: 'yesterday', label: 'Yesterday' },
+  { value: 'this_week', label: 'This Week' },
+  { value: 'last_week', label: 'Last Week' },
+  { value: 'this_month', label: 'This Month' },
+  { value: 'last_month', label: 'Last Month' },
+  { value: 'last_3_months', label: 'Last 3 Months' },
+  { value: 'custom', label: 'Custom Range' },
+]
+
 export default function ElevatorDirectoryPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
@@ -68,6 +160,16 @@ export default function ElevatorDirectoryPage() {
   const [importing, setImporting] = useState(false)
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // print modal state
+  const [printOpen, setPrintOpen] = useState(false)
+  const [printDateField, setPrintDateField] = useState<'next_service_due' | 'last_service_date'>(
+    'next_service_due'
+  )
+  const [printPreset, setPrintPreset] = useState<DatePreset>('all_time')
+  const [printCustomStart, setPrintCustomStart] = useState('')
+  const [printCustomEnd, setPrintCustomEnd] = useState('')
+  const [printRows, setPrintRows] = useState<Row[]>([])
 
   async function loadData() {
     const supabase = createClient()
@@ -220,8 +322,8 @@ export default function ElevatorDirectoryPage() {
 
   // ---------- EXPORT ----------
 
-  function exportRowsToWorksheetData() {
-    return filtered.map((r) => ({
+  function rowsToWorksheetData(source: Row[]) {
+    return source.map((r) => ({
       Code: r.code ?? '',
       Name: r.name,
       Phone: r.phone ?? '',
@@ -242,7 +344,7 @@ export default function ElevatorDirectoryPage() {
   }
 
   function handleExportExcel() {
-    const ws = XLSX.utils.json_to_sheet(exportRowsToWorksheetData())
+    const ws = XLSX.utils.json_to_sheet(rowsToWorksheetData(filtered))
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Elevator Directory')
     XLSX.writeFile(wb, `elevator-directory-${new Date().toISOString().slice(0, 10)}.xlsx`)
@@ -250,7 +352,7 @@ export default function ElevatorDirectoryPage() {
   }
 
   function handleExportCSV() {
-    const ws = XLSX.utils.json_to_sheet(exportRowsToWorksheetData())
+    const ws = XLSX.utils.json_to_sheet(rowsToWorksheetData(filtered))
     const csv = XLSX.utils.sheet_to_csv(ws)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -264,8 +366,24 @@ export default function ElevatorDirectoryPage() {
 
   // ---------- PRINT ----------
 
-  function handlePrint() {
-    window.print()
+  function handleConfirmPrint() {
+    const { start, end } = computeDateRange(printPreset, printCustomStart, printCustomEnd)
+
+    const result = filtered.filter((r) => {
+      const raw = printDateField === 'next_service_due' ? r.next_service_due : r.last_service_date
+      if (printPreset === 'all_time') return true
+      if (!raw) return false
+      const d = new Date(raw)
+      if (start && d < start) return false
+      if (end && d > end) return false
+      return true
+    })
+
+    setPrintRows(result)
+    setPrintOpen(false)
+
+    // wait a tick for the print-only table to render before opening print dialog
+    setTimeout(() => window.print(), 50)
   }
 
   // ---------- IMPORT ----------
@@ -316,7 +434,6 @@ export default function ElevatorDirectoryPage() {
         }
 
         try {
-          // 1) find or create customer
           let customerId = customerCache.get(customerName.toLowerCase())
 
           if (!customerId) {
@@ -352,7 +469,6 @@ export default function ElevatorDirectoryPage() {
             customerCache.set(customerName.toLowerCase(), customerId!)
           }
 
-          // 2) find or create a single building for this customer (address/city/pincode)
           const address = String(raw.address ?? '').trim()
           const city = String(raw.city ?? '').trim()
           const pincode = String(raw.pincode ?? '').trim()
@@ -389,7 +505,6 @@ export default function ElevatorDirectoryPage() {
             }
           }
 
-          // 3) create elevator if type/model/capacity/status info given
           const elevatorType = String(raw.elevator_type ?? '').trim()
           const model = String(raw.model ?? '').trim()
           const hasElevatorInfo = elevatorType || model || raw.capacity_kg
@@ -425,15 +540,74 @@ export default function ElevatorDirectoryPage() {
     e.target.value = ''
   }
 
+  function renderTableRows(source: Row[]) {
+    return source.map((r) => (
+      <tr key={r.key} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
+        <td className="px-4 py-3 text-slate-300">{r.code ?? <Dash />}</td>
+        <td className="px-4 py-3 text-white font-medium">{r.name}</td>
+        <td className="px-4 py-3 text-slate-300">{r.phone ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-300">{r.email ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-300">{r.city ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.address ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-300">{r.gst ?? <Dash />}</td>
+        <td className="px-4 py-3">
+          {r.active ? <span className="text-emerald-300">Yes</span> : <span className="text-slate-500">No</span>}
+        </td>
+        <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.notes ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-300">{r.pincode ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-300">{r.elevator_type ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-300">{r.capacity_kg ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-300">{r.model ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-400">{r.last_service_date ?? <Dash />}</td>
+        <td className="px-4 py-3 text-slate-400">{r.next_service_due ?? <Dash />}</td>
+        <td className="px-4 py-3">
+          {r.status ? (
+            <span className={`inline-block px-2.5 py-1 rounded-full text-xs border ${STATUS_COLORS[r.status] ?? 'bg-slate-500/15 text-slate-300 border-slate-500/30'}`}>
+              {r.status.replace('_', ' ')}
+            </span>
+          ) : (
+            <span className="inline-block px-2.5 py-1 rounded-full text-xs border bg-white/5 text-slate-500 border-white/10">
+              no elevator yet
+            </span>
+          )}
+        </td>
+      </tr>
+    ))
+  }
+
+  const tableHeaderCells = (
+    <tr className="border-b border-white/10 text-left text-slate-400">
+      <th className="px-4 py-3 font-medium">Code</th>
+      <th className="px-4 py-3 font-medium">Name</th>
+      <th className="px-4 py-3 font-medium">Phone</th>
+      <th className="px-4 py-3 font-medium">Email</th>
+      <th className="px-4 py-3 font-medium">City</th>
+      <th className="px-4 py-3 font-medium">Address</th>
+      <th className="px-4 py-3 font-medium">GST</th>
+      <th className="px-4 py-3 font-medium">Active</th>
+      <th className="px-4 py-3 font-medium">Notes</th>
+      <th className="px-4 py-3 font-medium">Pincode</th>
+      <th className="px-4 py-3 font-medium">Elevator Type</th>
+      <th className="px-4 py-3 font-medium">Capacity</th>
+      <th className="px-4 py-3 font-medium">Model</th>
+      <th className="px-4 py-3 font-medium">Last Service</th>
+      <th className="px-4 py-3 font-medium">Next Service</th>
+      <th className="px-4 py-3 font-medium">Status</th>
+    </tr>
+  )
+
   return (
     <div className="min-h-screen bg-[#0a0e14] text-slate-100 p-6 print:bg-white print:text-black">
       <style>{`
         @media print {
           .no-print { display: none !important; }
+          .screen-only { display: none !important; }
+          .print-only { display: block !important; }
           body { background: white !important; }
           table { color: black !important; }
           th, td { color: black !important; border-color: #ccc !important; }
         }
+        .print-only { display: none; }
       `}</style>
 
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -474,7 +648,7 @@ export default function ElevatorDirectoryPage() {
           </div>
 
           <button
-            onClick={handlePrint}
+            onClick={() => setPrintOpen(true)}
             className="px-4 py-2 rounded-xl text-sm border border-[#A7FEEB]/30 bg-[#A7FEEB]/10 text-[#A7FEEB] hover:bg-[#A7FEEB]/20 transition-colors"
           >
             Print
@@ -502,29 +676,11 @@ export default function ElevatorDirectoryPage() {
         </select>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden print:border-black print:bg-white">
+      {/* SCREEN TABLE (hidden on print) */}
+      <div className="screen-only rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-white/10 text-left text-slate-400">
-                <th className="px-4 py-3 font-medium">Code</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">City</th>
-                <th className="px-4 py-3 font-medium">Address</th>
-                <th className="px-4 py-3 font-medium">GST</th>
-                <th className="px-4 py-3 font-medium">Active</th>
-                <th className="px-4 py-3 font-medium">Notes</th>
-                <th className="px-4 py-3 font-medium">Pincode</th>
-                <th className="px-4 py-3 font-medium">Elevator Type</th>
-                <th className="px-4 py-3 font-medium">Capacity</th>
-                <th className="px-4 py-3 font-medium">Model</th>
-                <th className="px-4 py-3 font-medium">Last Service</th>
-                <th className="px-4 py-3 font-medium">Next Service</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
+            <thead>{tableHeaderCells}</thead>
             <tbody>
               {loading ? (
                 <tr>
@@ -535,38 +691,7 @@ export default function ElevatorDirectoryPage() {
                   <td colSpan={16} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
                 </tr>
               ) : (
-                filtered.map((r) => (
-                  <tr key={r.key} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
-                    <td className="px-4 py-3 text-slate-300">{r.code ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-white font-medium">{r.name}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.phone ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.email ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.city ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.address ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.gst ?? <Dash />}</td>
-                    <td className="px-4 py-3">
-                      {r.active ? <span className="text-emerald-300">Yes</span> : <span className="text-slate-500">No</span>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.notes ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.pincode ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.elevator_type ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.capacity_kg ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-300">{r.model ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-400">{r.last_service_date ?? <Dash />}</td>
-                    <td className="px-4 py-3 text-slate-400">{r.next_service_due ?? <Dash />}</td>
-                    <td className="px-4 py-3">
-                      {r.status ? (
-                        <span className={`inline-block px-2.5 py-1 rounded-full text-xs border ${STATUS_COLORS[r.status] ?? 'bg-slate-500/15 text-slate-300 border-slate-500/30'}`}>
-                          {r.status.replace('_', ' ')}
-                        </span>
-                      ) : (
-                        <span className="inline-block px-2.5 py-1 rounded-full text-xs border bg-white/5 text-slate-500 border-white/10">
-                          no elevator yet
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                renderTableRows(filtered)
               )}
             </tbody>
           </table>
@@ -577,6 +702,20 @@ export default function ElevatorDirectoryPage() {
         {filtered.length} row{filtered.length !== 1 ? 's' : ''}
       </div>
 
+      {/* PRINT-ONLY TABLE (only rendered visible during print, with date-filtered rows) */}
+      <div className="print-only">
+        <p className="text-xs text-black mb-2">
+          {PRESET_OPTIONS.find((p) => p.value === printPreset)?.label} ·{' '}
+          {printDateField === 'next_service_due' ? 'Next Service Due' : 'Last Service Date'} ·{' '}
+          {printRows.length} row{printRows.length !== 1 ? 's' : ''}
+        </p>
+        <table className="w-full text-sm">
+          <thead>{tableHeaderCells}</thead>
+          <tbody>{renderTableRows(printRows)}</tbody>
+        </table>
+      </div>
+
+      {/* IMPORT MODAL */}
       {importOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
           <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1119] p-6">
@@ -626,6 +765,82 @@ export default function ElevatorDirectoryPage() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* PRINT MODAL */}
+      {printOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1119] p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Print Elevator Directory</h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  Choose which date to filter by, and the range to print.
+                </p>
+              </div>
+              <button onClick={() => setPrintOpen(false)} className="text-slate-400 hover:text-white">
+                ✕
+              </button>
+            </div>
+
+            <label className="block text-xs text-slate-400 mb-1">Filter by</label>
+            <select
+              value={printDateField}
+              onChange={(e) => setPrintDateField(e.target.value as any)}
+              className="w-full mb-4 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+            >
+              <option value="next_service_due">Next Service Due</option>
+              <option value="last_service_date">Last Service Date</option>
+            </select>
+
+            <label className="block text-xs text-slate-400 mb-1">Range</label>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {PRESET_OPTIONS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => setPrintPreset(p.value)}
+                  className={`px-3 py-2 rounded-xl text-sm border transition-colors ${
+                    printPreset === p.value
+                      ? 'bg-[#A7FEEB]/15 border-[#A7FEEB]/40 text-[#A7FEEB]'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {printPreset === 'custom' && (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Start date</label>
+                  <input
+                    type="date"
+                    value={printCustomStart}
+                    onChange={(e) => setPrintCustomStart(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">End date</label>
+                  <input
+                    type="date"
+                    value={printCustomEnd}
+                    onChange={(e) => setPrintCustomEnd(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleConfirmPrint}
+              className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-[#A7FEEB]/15 border border-[#A7FEEB]/40 text-[#A7FEEB] hover:bg-[#A7FEEB]/25 transition-colors"
+            >
+              Print
+            </button>
           </div>
         </div>
       )}
