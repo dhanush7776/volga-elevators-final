@@ -25,6 +25,51 @@ import toast from 'react-hot-toast';
 
 const PAGE_SIZE = 10;
 
+function PhotoThumbnails({ paths }: { paths: string[] }) {
+  const supabase = createClient();
+  const [urls, setUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const signed = await Promise.all(
+        paths.map(async (p) => {
+          const { data } = await supabase.storage
+            .from('technician-documents')
+            .createSignedUrl(p, 3600);
+          return data?.signedUrl ?? null;
+        })
+      );
+      if (!cancelled) setUrls(signed.filter(Boolean) as string[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paths.join(',')]);
+
+  if (urls.length === 0) return <span className="text-xs text-white/30">Loading…</span>;
+
+  return (
+    <div className="flex -space-x-2">
+      {urls.slice(0, 3).map((url, i) => (
+        <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+          <img
+            src={url}
+            alt="Job photo"
+            className="h-8 w-8 rounded-md border border-white/20 object-cover transition-transform hover:z-10 hover:scale-150"
+          />
+        </a>
+      ))}
+      {urls.length > 3 && (
+        <span className="flex h-8 w-8 items-center justify-center rounded-md border border-white/20 bg-white/10 text-xs text-white/60">
+          +{urls.length - 3}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig }) {
   const { profile } = useAuth();
   const supabase = createClient();
@@ -95,6 +140,23 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
     setPage(1);
   }, [search, statusFilter, moduleConfig.slug]);
 
+  // Live-refresh this table when the underlying row data changes elsewhere
+  // (e.g. a technician uploads a photo or completes a job from their dashboard)
+  useEffect(() => {
+    const channel = supabase
+      .channel(`crud-${moduleConfig.table}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: moduleConfig.table },
+        () => load()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moduleConfig.table, page, search, statusFilter, sortKey, sortDir]);
+
   const toggleSort = (key: string) => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -124,6 +186,11 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
     if (field.relation) {
       const rel = row[field.relation.table];
       return rel?.[field.relation.labelKey] ?? '—';
+    }
+    if (field.type === 'photos') {
+      const paths: string[] = Array.isArray(raw) ? raw : [];
+      if (paths.length === 0) return '—';
+      return <PhotoThumbnails paths={paths} />;
     }
     if (raw === null || raw === undefined || raw === '') return '—';
     if (field.type === 'badge') {
@@ -188,7 +255,7 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
               <Plus className="h-4 w-4" /> Add {moduleConfig.label.slice(0, -1) || moduleConfig.label}
             </button>
           )}
-          
+
 
           {moduleConfig.canCreate && canWrite && (
           <ImportMenu
