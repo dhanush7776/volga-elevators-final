@@ -17,7 +17,8 @@ export type FieldType =
   | 'datetime'
   | 'select'
   | 'checkbox'
-  | 'badge';
+  | 'badge'
+  | 'photos';
 
 export type FieldOption = { value: string; label: string };
 
@@ -256,6 +257,7 @@ export const MODULES: ModuleConfig[] = [
         badgeColors: statusBadgeColors,
       },
       { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'photo_urls', label: 'Photos', type: 'photos', showInForm: false },
     ],
   },
   {
