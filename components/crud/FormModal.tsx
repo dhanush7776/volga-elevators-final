@@ -1,6 +1,5 @@
 'use client';
 
-
 import SearchableSelect from '@/components/SearchableSelect';
 import { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
@@ -129,6 +128,14 @@ export default function FormModal({
                   rows={3}
                   className="input-field resize-none"
                 />
+              ) : f.relation ? (
+                <SearchableSelect
+                  required={f.required}
+                  value={values[f.key] ?? ''}
+                  onChange={(v) => handleChange(f.key, v)}
+                  options={relationOptions[f.key] ?? []}
+                  placeholder={`Select ${f.label.toLowerCase()}...`}
+                />
               ) : f.type === 'select' || f.type === 'badge' ? (
                 <select
                   required={f.required}
@@ -137,7 +144,7 @@ export default function FormModal({
                   className="input-field"
                 >
                   <option value="">Select...</option>
-                  {(f.relation ? relationOptions[f.key] : f.options)?.map((opt) => (
+                  {f.options?.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
