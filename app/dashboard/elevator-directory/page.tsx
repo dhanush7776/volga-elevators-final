@@ -3,6 +3,9 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { createClient } from '@/lib/supabase/client' // adjust path if yours differs
+import { Pencil, Trash2, ChevronUp, ChevronDown, Plus } from 'lucide-react'
+import CustomerFormModal, { CustomerFormValues } from '@/components/CustomerFormModal'
+import CustomerDetailModal from '@/components/CustomerDetailModal'
 
 type Row = {
   key: string
@@ -25,6 +28,7 @@ type Row = {
   last_service_date: string | null
   next_service_due: string | null
   status: string | null
+  service_interval_months: number
 }
 
 type ImportSummary = {
@@ -45,6 +49,19 @@ type DatePreset =
   | 'last_3_months'
   | 'all_time'
   | 'custom'
+
+type SortColumn =
+  | 'code'
+  | 'name'
+  | 'phone'
+  | 'city'
+  | 'address'
+  | 'active'
+  | 'notes'
+  | 'elevator_type'
+  | 'last_service_date'
+  | 'next_service_due'
+  | 'status'
 
 const STATUS_COLORS: Record<string, string> = {
   operational: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
@@ -171,6 +188,18 @@ export default function ElevatorDirectoryPage() {
   const [printCustomEnd, setPrintCustomEnd] = useState('')
   const [printRows, setPrintRows] = useState<Row[]>([])
 
+  // sorting
+  const [sortColumn, setSortColumn] = useState<SortColumn>('name')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
+  // add/edit customer modal
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<CustomerFormValues | null>(null)
+
+  // customer detail modal
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
+
   async function loadData() {
     const supabase = createClient()
     setLoading(true)
@@ -189,6 +218,7 @@ export default function ElevatorDirectoryPage() {
         is_active,
         notes,
         deleted_at,
+        service_interval_months,
         buildings (
           id,
           address,
@@ -230,6 +260,7 @@ export default function ElevatorDirectoryPage() {
         gst: c.gst_number,
         active: c.is_active,
         notes: c.notes,
+        service_interval_months: c.service_interval_months ?? 3,
       }
 
       if (activeBuildings.length === 0) {
@@ -320,7 +351,34 @@ export default function ElevatorDirectoryPage() {
     })
   }, [rows, search, statusFilter])
 
-  // ---------- EXPORT ----------
+  const sortedFiltered = useMemo(() => {
+    const copy = [...filtered]
+    copy.sort((a, b) => {
+      const av = a[sortColumn]
+      const bv = b[sortColumn]
+
+      if (typeof av === 'boolean' || typeof bv === 'boolean') {
+        const an = av ? 1 : 0
+        const bn = bv ? 1 : 0
+        return sortDirection === 'asc' ? an - bn : bn - an
+      }
+
+      const as = (av ?? '').toString().toLowerCase()
+      const bs = (bv ?? '').toString().toLowerCase()
+      const cmp = as.localeCompare(bs)
+      return sortDirection === 'asc' ? cmp : -cmp
+    })
+    return copy
+  }, [filtered, sortColumn, sortDirection])
+
+  function toggleSort(column: SortColumn) {
+    if (sortColumn === column) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
 
   function rowsToWorksheetData(source: Row[]) {
     return source.map((r) => ({
@@ -364,8 +422,6 @@ export default function ElevatorDirectoryPage() {
     setExportMenuOpen(false)
   }
 
-  // ---------- PRINT ----------
-
   function handleConfirmPrint() {
     const { start, end } = computeDateRange(printPreset, printCustomStart, printCustomEnd)
 
@@ -382,11 +438,8 @@ export default function ElevatorDirectoryPage() {
     setPrintRows(result)
     setPrintOpen(false)
 
-    // wait a tick for the print-only table to render before opening print dialog
     setTimeout(() => window.print(), 50)
   }
-
-  // ---------- IMPORT ----------
 
   function handleDownloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([IMPORT_TEMPLATE_HEADERS])
@@ -540,24 +593,79 @@ export default function ElevatorDirectoryPage() {
     e.target.value = ''
   }
 
-  function renderTableRows(source: Row[]) {
+  function openAddCustomer() {
+    setEditingCustomer(null)
+    setFormOpen(true)
+  }
+
+  function openEditCustomer(r: Row) {
+    setEditingCustomer({
+      id: r.customer_id,
+      name: r.name,
+      phone: r.phone ?? '',
+      address: r.address ?? '',
+      city: r.city ?? '',
+      notes: r.notes ?? '',
+      service_interval_months: (r.service_interval_months as 3 | 6) ?? 3,
+    })
+    setFormOpen(true)
+  }
+
+  async function handleDeleteCustomer(r: Row) {
+    if (!confirm(`Delete ${r.name}? This removes them from the directory.`)) return
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('customers')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', r.customer_id)
+
+    if (error) {
+      alert(`Could not delete: ${error.message}`)
+      return
+    }
+    await loadData()
+  }
+
+  function openCustomerDetail(r: Row) {
+    setSelectedCustomerId(r.customer_id)
+    setDetailOpen(true)
+  }
+
+  function SortHeader({ label, column }: { label: string; column: SortColumn }) {
+    const active = sortColumn === column
+    return (
+      <th
+        onClick={() => toggleSort(column)}
+        className="px-4 py-3 font-medium cursor-pointer select-none hover:text-white transition-colors"
+      >
+        <span className="flex items-center gap-1">
+          {label}
+          {active &&
+            (sortDirection === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
+        </span>
+      </th>
+    )
+  }
+
+  function renderTableRows(source: Row[], sortableRowClick: boolean) {
     return source.map((r) => (
-      <tr key={r.key} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
+      <tr
+        key={r.key}
+        onClick={sortableRowClick ? () => openCustomerDetail(r) : undefined}
+        className={`border-b border-white/5 hover:bg-white/[0.04] transition-colors ${
+          sortableRowClick ? 'cursor-pointer' : ''
+        }`}
+      >
         <td className="px-4 py-3 text-slate-300">{r.code ?? <Dash />}</td>
         <td className="px-4 py-3 text-white font-medium">{r.name}</td>
         <td className="px-4 py-3 text-slate-300">{r.phone ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-300">{r.email ?? <Dash />}</td>
         <td className="px-4 py-3 text-slate-300">{r.city ?? <Dash />}</td>
         <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.address ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-300">{r.gst ?? <Dash />}</td>
         <td className="px-4 py-3">
           {r.active ? <span className="text-emerald-300">Yes</span> : <span className="text-slate-500">No</span>}
         </td>
         <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.notes ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-300">{r.pincode ?? <Dash />}</td>
         <td className="px-4 py-3 text-slate-300">{r.elevator_type ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-300">{r.capacity_kg ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-300">{r.model ?? <Dash />}</td>
         <td className="px-4 py-3 text-slate-400">{r.last_service_date ?? <Dash />}</td>
         <td className="px-4 py-3 text-slate-400">{r.next_service_due ?? <Dash />}</td>
         <td className="px-4 py-3">
@@ -571,25 +679,40 @@ export default function ElevatorDirectoryPage() {
             </span>
           )}
         </td>
+        {sortableRowClick && (
+          <td className="px-4 py-3 no-print" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => openEditCustomer(r)}
+                className="rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-[#A7FEEB] transition-colors"
+                title="Edit customer"
+              >
+                <Pencil size={14} />
+              </button>
+              <button
+                onClick={() => handleDeleteCustomer(r)}
+                className="rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-rose-400 transition-colors"
+                title="Delete customer"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </td>
+        )}
       </tr>
     ))
   }
 
-  const tableHeaderCells = (
+  const printHeaderCells = (
     <tr className="border-b border-white/10 text-left text-slate-400">
       <th className="px-4 py-3 font-medium">Code</th>
       <th className="px-4 py-3 font-medium">Name</th>
       <th className="px-4 py-3 font-medium">Phone</th>
-      <th className="px-4 py-3 font-medium">Email</th>
       <th className="px-4 py-3 font-medium">City</th>
       <th className="px-4 py-3 font-medium">Address</th>
-      <th className="px-4 py-3 font-medium">GST</th>
       <th className="px-4 py-3 font-medium">Active</th>
       <th className="px-4 py-3 font-medium">Notes</th>
-      <th className="px-4 py-3 font-medium">Pincode</th>
       <th className="px-4 py-3 font-medium">Elevator Type</th>
-      <th className="px-4 py-3 font-medium">Capacity</th>
-      <th className="px-4 py-3 font-medium">Model</th>
       <th className="px-4 py-3 font-medium">Last Service</th>
       <th className="px-4 py-3 font-medium">Next Service</th>
       <th className="px-4 py-3 font-medium">Status</th>
@@ -620,7 +743,14 @@ export default function ElevatorDirectoryPage() {
           </p>
         </div>
 
-        <div className="flex gap-2 no-print">
+        <div className="flex gap-2 no-print flex-wrap">
+          <button
+            onClick={openAddCustomer}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[#0D9488] text-white hover:bg-[#0D9488]/90 transition-colors"
+          >
+            <Plus size={15} /> Add Customer
+          </button>
+
           <button
             onClick={() => setImportOpen(true)}
             className="px-4 py-2 rounded-xl text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
@@ -676,22 +806,36 @@ export default function ElevatorDirectoryPage() {
         </select>
       </div>
 
-      {/* SCREEN TABLE (hidden on print) */}
       <div className="screen-only rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm whitespace-nowrap">
-            <thead>{tableHeaderCells}</thead>
+            <thead>
+              <tr className="border-b border-white/10 text-left text-slate-400">
+                <SortHeader label="Code" column="code" />
+                <SortHeader label="Name" column="name" />
+                <SortHeader label="Phone" column="phone" />
+                <SortHeader label="City" column="city" />
+                <SortHeader label="Address" column="address" />
+                <SortHeader label="Active" column="active" />
+                <SortHeader label="Notes" column="notes" />
+                <SortHeader label="Elevator Type" column="elevator_type" />
+                <SortHeader label="Last Service" column="last_service_date" />
+                <SortHeader label="Next Service" column="next_service_due" />
+                <SortHeader label="Status" column="status" />
+                <th className="px-4 py-3 font-medium no-print">Actions</th>
+              </tr>
+            </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={16} className="px-4 py-8 text-center text-slate-500">Loading…</td>
+                  <td colSpan={12} className="px-4 py-8 text-center text-slate-500">Loading…</td>
                 </tr>
-              ) : filtered.length === 0 ? (
+              ) : sortedFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={16} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
+                  <td colSpan={12} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
                 </tr>
               ) : (
-                renderTableRows(filtered)
+                renderTableRows(sortedFiltered, true)
               )}
             </tbody>
           </table>
@@ -699,10 +843,9 @@ export default function ElevatorDirectoryPage() {
       </div>
 
       <div className="mt-3 text-xs text-slate-500 no-print">
-        {filtered.length} row{filtered.length !== 1 ? 's' : ''}
+        {filtered.length} row{filtered.length !== 1 ? 's' : ''} · tap a customer to view details, tap a column to sort
       </div>
 
-      {/* PRINT-ONLY TABLE (only rendered visible during print, with date-filtered rows) */}
       <div className="print-only">
         <p className="text-xs text-black mb-2">
           {PRESET_OPTIONS.find((p) => p.value === printPreset)?.label} ·{' '}
@@ -710,12 +853,11 @@ export default function ElevatorDirectoryPage() {
           {printRows.length} row{printRows.length !== 1 ? 's' : ''}
         </p>
         <table className="w-full text-sm">
-          <thead>{tableHeaderCells}</thead>
-          <tbody>{renderTableRows(printRows)}</tbody>
+          <thead>{printHeaderCells}</thead>
+          <tbody>{renderTableRows(printRows, false)}</tbody>
         </table>
       </div>
 
-      {/* IMPORT MODAL */}
       {importOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
           <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1119] p-6">
@@ -769,7 +911,6 @@ export default function ElevatorDirectoryPage() {
         </div>
       )}
 
-      {/* PRINT MODAL */}
       {printOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1119] p-6">
@@ -844,6 +985,19 @@ export default function ElevatorDirectoryPage() {
           </div>
         </div>
       )}
+
+      <CustomerFormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSaved={loadData}
+        initialValues={editingCustomer}
+      />
+
+      <CustomerDetailModal
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        customerId={selectedCustomerId}
+      />
     </div>
   )
 }
