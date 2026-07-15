@@ -1,5 +1,7 @@
 'use client';
 
+
+import SearchableSelect from '@/components/SearchableSelect';
 import { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { ModuleConfig } from '@/lib/modules';
