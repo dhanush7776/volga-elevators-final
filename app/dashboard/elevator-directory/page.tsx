@@ -29,6 +29,7 @@ type Row = {
   next_service_due: string | null
   status: string | null
   service_interval_months: number
+  payment_status: string
 }
 
 type ImportSummary = {
@@ -58,15 +59,19 @@ type SortColumn =
   | 'address'
   | 'active'
   | 'notes'
-  | 'elevator_type'
   | 'last_service_date'
   | 'next_service_due'
-  | 'status'
+  | 'payment_status'
 
 const STATUS_COLORS: Record<string, string> = {
   operational: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
   under_maintenance: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
   out_of_service: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+}
+
+const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  paid: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  unpaid: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
 }
 
 const IMPORT_TEMPLATE_HEADERS = [
@@ -219,6 +224,7 @@ export default function ElevatorDirectoryPage() {
         notes,
         deleted_at,
         service_interval_months,
+        payment_status,
         buildings (
           id,
           address,
@@ -261,6 +267,7 @@ export default function ElevatorDirectoryPage() {
         active: c.is_active,
         notes: c.notes,
         service_interval_months: c.service_interval_months ?? 3,
+        payment_status: c.payment_status ?? 'unpaid',
       }
 
       if (activeBuildings.length === 0) {
@@ -392,12 +399,11 @@ export default function ElevatorDirectoryPage() {
       Active: r.active ? 'Yes' : 'No',
       Notes: r.notes ?? '',
       Pincode: r.pincode ?? '',
-      'Elevator Type': r.elevator_type ?? '',
       'Elevator Capacity (kg)': r.capacity_kg ?? '',
       'Elevator Model': r.model ?? '',
       'Last Service': r.last_service_date ?? '',
       'Next Service': r.next_service_due ?? '',
-      Status: r.status ?? '',
+      'Payment Status': r.payment_status ?? '',
     }))
   }
 
@@ -607,6 +613,7 @@ export default function ElevatorDirectoryPage() {
       city: r.city ?? '',
       notes: r.notes ?? '',
       service_interval_months: (r.service_interval_months as 3 | 6) ?? 3,
+      payment_status: (r.payment_status as 'paid' | 'unpaid') ?? 'unpaid',
     })
     setFormOpen(true)
   }
@@ -665,19 +672,12 @@ export default function ElevatorDirectoryPage() {
           {r.active ? <span className="text-emerald-300">Yes</span> : <span className="text-slate-500">No</span>}
         </td>
         <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.notes ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-300">{r.elevator_type ?? <Dash />}</td>
         <td className="px-4 py-3 text-slate-400">{r.last_service_date ?? <Dash />}</td>
         <td className="px-4 py-3 text-slate-400">{r.next_service_due ?? <Dash />}</td>
         <td className="px-4 py-3">
-          {r.status ? (
-            <span className={`inline-block px-2.5 py-1 rounded-full text-xs border ${STATUS_COLORS[r.status] ?? 'bg-slate-500/15 text-slate-300 border-slate-500/30'}`}>
-              {r.status.replace('_', ' ')}
-            </span>
-          ) : (
-            <span className="inline-block px-2.5 py-1 rounded-full text-xs border bg-white/5 text-slate-500 border-white/10">
-              no elevator yet
-            </span>
-          )}
+          <span className={`inline-block px-2.5 py-1 rounded-full text-xs border capitalize ${PAYMENT_STATUS_COLORS[r.payment_status] ?? 'bg-slate-500/15 text-slate-300 border-slate-500/30'}`}>
+            {r.payment_status}
+          </span>
         </td>
         {sortableRowClick && (
           <td className="px-4 py-3 no-print" onClick={(e) => e.stopPropagation()}>
@@ -712,10 +712,9 @@ export default function ElevatorDirectoryPage() {
       <th className="px-4 py-3 font-medium">Address</th>
       <th className="px-4 py-3 font-medium">Active</th>
       <th className="px-4 py-3 font-medium">Notes</th>
-      <th className="px-4 py-3 font-medium">Elevator Type</th>
       <th className="px-4 py-3 font-medium">Last Service</th>
       <th className="px-4 py-3 font-medium">Next Service</th>
-      <th className="px-4 py-3 font-medium">Status</th>
+      <th className="px-4 py-3 font-medium">Payment Status</th>
     </tr>
   )
 
@@ -818,21 +817,20 @@ export default function ElevatorDirectoryPage() {
                 <SortHeader label="Address" column="address" />
                 <SortHeader label="Active" column="active" />
                 <SortHeader label="Notes" column="notes" />
-                <SortHeader label="Elevator Type" column="elevator_type" />
                 <SortHeader label="Last Service" column="last_service_date" />
                 <SortHeader label="Next Service" column="next_service_due" />
-                <SortHeader label="Status" column="status" />
+                <SortHeader label="Payment Status" column="payment_status" />
                 <th className="px-4 py-3 font-medium no-print">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-8 text-center text-slate-500">Loading…</td>
+                  <td colSpan={11} className="px-4 py-8 text-center text-slate-500">Loading…</td>
                 </tr>
               ) : sortedFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
+                  <td colSpan={11} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
                 </tr>
               ) : (
                 renderTableRows(sortedFiltered, true)
