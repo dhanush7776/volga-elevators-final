@@ -12,6 +12,7 @@ export interface CustomerFormValues {
   city: string;
   notes: string;
   service_interval_months: 3 | 6;
+  payment_status: "paid" | "unpaid";
 }
 
 const EMPTY: CustomerFormValues = {
@@ -21,6 +22,7 @@ const EMPTY: CustomerFormValues = {
   city: "",
   notes: "",
   service_interval_months: 3,
+  payment_status: "unpaid",
 };
 
 export default function CustomerFormModal({
@@ -66,6 +68,7 @@ export default function CustomerFormModal({
       city: values.city.trim() || null,
       notes: values.notes.trim() || null,
       service_interval_months: values.service_interval_months,
+      payment_status: values.payment_status,
     };
 
     const result = isEdit
@@ -176,6 +179,30 @@ export default function CustomerFormModal({
               Applies to all elevators under this customer. A reminder notification
               is sent to admins 7 days before the next service is due.
             </p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-400">
+              Payment status
+            </label>
+            <div className="flex gap-2">
+              {(["paid", "unpaid"] as const).map((p) => (
+                <button
+                  type="button"
+                  key={p}
+                  onClick={() => setValues({ ...values, payment_status: p })}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm capitalize transition ${
+                    values.payment_status === p
+                      ? p === "paid"
+                        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-300"
+                        : "border-rose-400/40 bg-rose-500/10 text-rose-300"
+                      : "border-white/10 bg-slate-800/60 text-slate-400 hover:border-white/20"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
