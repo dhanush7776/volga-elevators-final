@@ -11,7 +11,7 @@ export interface CustomerFormValues {
   address: string;
   city: string;
   notes: string;
-  service_interval_months: 3 | 6;
+  service_interval_months: 6 | 12;
   payment_status: "paid" | "unpaid";
 }
 
@@ -21,7 +21,7 @@ const EMPTY: CustomerFormValues = {
   address: "",
   city: "",
   notes: "",
-  service_interval_months: 3,
+  service_interval_months: 6,
   payment_status: "unpaid",
 };
 
@@ -158,12 +158,12 @@ export default function CustomerFormModal({
               Service reminder interval
             </label>
             <div className="flex gap-2">
-              {[3, 6].map((m) => (
+              {[6, 12].map((m) => (
                 <button
                   type="button"
                   key={m}
                   onClick={() =>
-                    setValues({ ...values, service_interval_months: m as 3 | 6 })
+                    setValues({ ...values, service_interval_months: m as 6 | 12 })
                   }
                   className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
                     values.service_interval_months === m
@@ -171,7 +171,7 @@ export default function CustomerFormModal({
                       : "border-white/10 bg-slate-800/60 text-slate-400 hover:border-white/20"
                   }`}
                 >
-                  Every {m} months
+                  {m === 12 ? "Every 1 year" : `Every ${m} months`}
                 </button>
               ))}
             </div>
