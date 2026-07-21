@@ -266,7 +266,7 @@ export default function ElevatorDirectoryPage() {
         gst: c.gst_number,
         active: c.is_active,
         notes: c.notes,
-        service_interval_months: c.service_interval_months ?? 3,
+        service_interval_months: c.service_interval_months ?? 6,
         payment_status: c.payment_status ?? 'unpaid',
       }
 
@@ -612,7 +612,7 @@ export default function ElevatorDirectoryPage() {
       address: r.address ?? '',
       city: r.city ?? '',
       notes: r.notes ?? '',
-      service_interval_months: (r.service_interval_months as 3 | 6) ?? 3,
+      service_interval_months: (r.service_interval_months as 6 | 12) ?? 6,
       payment_status: (r.payment_status as 'paid' | 'unpaid') ?? 'unpaid',
     })
     setFormOpen(true)
