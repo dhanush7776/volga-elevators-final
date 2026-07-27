@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function Topbar({ title }: { title?: string }) {
   const { profile } = useAuth();
@@ -46,12 +47,24 @@ export default function Topbar({ title }: { title?: string }) {
   };
 
   return (
-    <header className="no-print sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-white/10 bg-navy-950/70 px-6 py-4 backdrop-blur-xl">
-      <div>{title && <h1 className="font-display text-lg font-bold text-white">{title}</h1>}</div>
+    <header
+      className="no-print sticky top-0 z-20 flex items-center justify-between gap-4 border-b px-6 py-4 backdrop-blur-xl"
+      style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-glass-bg)' }}
+    >
+      <div>
+        {title && (
+          <h1 className="font-display text-lg font-bold" style={{ color: 'var(--color-text)' }}>
+            {title}
+          </h1>
+        )}
+      </div>
 
       <form onSubmit={handleSearch} className="hidden max-w-md flex-1 md:block">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+            style={{ color: 'var(--color-input-placeholder)' }}
+          />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -62,8 +75,13 @@ export default function Topbar({ title }: { title?: string }) {
       </form>
 
       <div className="flex items-center gap-3">
-        <Link href="/dashboard/modules/notifications" className="relative rounded-lg p-2 hover:bg-white/[0.06]">
-          <Bell className="h-5 w-5 text-white/70" />
+        <ThemeToggle />
+
+        <Link
+          href="/dashboard/modules/notifications"
+          className="relative rounded-lg p-2 transition-colors hover:bg-mint-500/10"
+        >
+          <Bell className="h-5 w-5" style={{ color: 'var(--color-muted-text)' }} />
           {unread > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
               {unread > 9 ? '9+' : unread}
@@ -71,8 +89,12 @@ export default function Topbar({ title }: { title?: string }) {
           )}
         </Link>
         <div className="text-right">
-          <p className="text-sm font-medium text-white">{profile?.full_name}</p>
-          <p className="text-[11px] capitalize text-white/40">{profile?.role}</p>
+          <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>
+            {profile?.full_name}
+          </p>
+          <p className="text-[11px] capitalize" style={{ color: 'var(--color-muted-text)' }}>
+            {profile?.role}
+          </p>
         </div>
       </div>
     </header>
