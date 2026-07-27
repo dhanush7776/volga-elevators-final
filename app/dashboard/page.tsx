@@ -104,8 +104,10 @@ export default function AdminDashboardPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="glass-panel p-5 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-display text-sm font-semibold text-white">Revenue — Last 6 Months</h3>
-              <span className="font-display text-lg font-bold text-mint-300">
+              <h3 className="font-display text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+                Revenue — Last 6 Months
+              </h3>
+              <span className="font-display text-lg font-bold text-mint-500 dark:text-mint-300">
                 ₹{stats.total_revenue.toLocaleString('en-IN')}
               </span>
             </div>
@@ -113,24 +115,30 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="glass-panel p-5">
-            <h3 className="mb-4 font-display text-sm font-semibold text-white">Complaint Statistics</h3>
+            <h3 className="mb-4 font-display text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+              Complaint Statistics
+            </h3>
             <ComplaintChart data={complaintData} />
           </div>
         </div>
 
         <div className="glass-panel p-5">
-          <h3 className="mb-4 font-display text-sm font-semibold text-white">Recent Activity</h3>
+          <h3 className="mb-4 font-display text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+            Recent Activity
+          </h3>
           {activities.length === 0 ? (
-            <p className="text-sm text-white/40">No activity recorded yet.</p>
+            <p className="text-sm" style={{ color: 'var(--color-input-placeholder)' }}>
+              No activity recorded yet.
+            </p>
           ) : (
-            <ul className="divide-y divide-white/5">
+            <ul className="divide-y" style={{ borderColor: 'var(--color-glass-border)' }}>
               {activities.map((a) => (
                 <li key={a.id} className="flex items-center justify-between py-2.5 text-sm">
-                  <span className="text-white/80">
-                    <span className="capitalize text-mint-300">{a.action.toLowerCase()}</span>{' '}
-                    on <span className="text-white/60">{a.entity_table.replace(/_/g, ' ')}</span>
+                  <span style={{ color: 'var(--color-muted-text)' }}>
+                    <span className="capitalize text-mint-500 dark:text-mint-300">{a.action.toLowerCase()}</span>{' '}
+                    on <span style={{ color: 'var(--color-muted-text)' }}>{a.entity_table.replace(/_/g, ' ')}</span>
                   </span>
-                  <span className="text-xs text-white/30">
+                  <span className="text-xs" style={{ color: 'var(--color-input-placeholder)' }}>
                     {format(new Date(a.created_at), 'dd MMM, hh:mm a')}
                   </span>
                 </li>
