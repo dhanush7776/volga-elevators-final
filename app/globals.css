@@ -7,53 +7,113 @@
 :root {
   --font-display: 'Manrope', system-ui, sans-serif;
   --font-body: 'Manrope', system-ui, sans-serif;
+
+  --color-bg: #F7FAF9;
+  --color-text: #0B1220;
+  --color-glass-bg: rgba(0, 0, 0, 0.03);
+  --color-glass-border: rgba(0, 0, 0, 0.08);
+  --color-card-bg: rgba(0, 0, 0, 0.02);
+  --color-input-bg: rgba(0, 0, 0, 0.02);
+  --color-input-text: #0B1220;
+  --color-input-placeholder: rgba(0, 0, 0, 0.35);
+  --color-muted-text: rgba(0, 0, 0, 0.65);
+  --color-table-header: #0B7A70;
+  --scrollbar-thumb: rgba(13, 148, 136, 0.35);
+  --aurora-image: radial-gradient(circle at 20% 20%, rgba(13,148,136,0.08), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(45,212,191,0.06), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(11,122,112,0.07), transparent 50%);
+}
+
+.dark {
+  --color-bg: #050B12;
+  --color-text: #EAFFFB;
+  --color-glass-bg: rgba(255, 255, 255, 0.04);
+  --color-glass-border: rgba(255, 255, 255, 0.10);
+  --color-card-bg: rgba(255, 255, 255, 0.03);
+  --color-input-bg: rgba(255, 255, 255, 0.03);
+  --color-input-text: #ffffff;
+  --color-input-placeholder: rgba(255, 255, 255, 0.3);
+  --color-muted-text: rgba(255, 255, 255, 0.8);
+  --color-table-header: rgba(167, 254, 235, 0.7);
+  --scrollbar-thumb: rgba(45, 212, 191, 0.3);
+  --aurora-image: radial-gradient(circle at 20% 20%, rgba(45,212,191,0.16), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(167,254,235,0.10), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(13,148,136,0.14), transparent 50%);
 }
 
 html,
 body {
-  background-color: #050b12;
-  color: #eafffb;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.bg-aurora {
+  background-image: var(--aurora-image);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(45, 212, 191, 0.35) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(45, 212, 191, 0.3);
+  background: var(--scrollbar-thumb);
   border-radius: 8px;
 }
 
 @layer components {
   .glass-panel {
-    @apply relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-glass;
+    @apply relative rounded-2xl border backdrop-blur-xl shadow-glass;
+    background-color: var(--color-glass-bg);
+    border-color: var(--color-glass-border);
   }
   .glass-card {
-    @apply relative rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-lg shadow-glass transition-colors hover:border-mint-500/30;
+    @apply relative rounded-xl border backdrop-blur-lg shadow-glass transition-colors hover:border-mint-500/30;
+    background-color: var(--color-card-bg);
+    border-color: var(--color-glass-border);
   }
   .btn-primary {
     @apply inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-mint-600 to-mint-400 px-4 py-2 text-sm font-semibold text-navy-950 shadow-glow-mint transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-secondary {
-    @apply inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/80 backdrop-blur transition-colors hover:bg-white/[0.08] hover:text-white;
+    @apply inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium backdrop-blur transition-colors;
+    background-color: var(--color-glass-bg);
+    border-color: var(--color-glass-border);
+    color: var(--color-muted-text);
+  }
+  .btn-secondary:hover {
+    color: var(--color-text);
   }
   .btn-ghost {
-    @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white;
+    @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors;
+    color: var(--color-muted-text);
+  }
+  .btn-ghost:hover {
+    background-color: var(--color-glass-bg);
+    color: var(--color-text);
   }
   .input-field {
-    @apply w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder-white/30 outline-none transition focus:border-mint-400/60 focus:ring-2 focus:ring-mint-400/20;
+    @apply w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:border-mint-400/60 focus:ring-2 focus:ring-mint-400/20;
+    background-color: var(--color-input-bg);
+    border-color: var(--color-glass-border);
+    color: var(--color-input-text);
+  }
+  .input-field::placeholder {
+    color: var(--color-input-placeholder);
   }
   .table-header-cell {
-    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-mint-200/70;
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider;
+    color: var(--color-table-header);
   }
   .table-cell {
-    @apply px-4 py-3 text-sm text-white/80;
+    @apply px-4 py-3 text-sm;
+    color: var(--color-muted-text);
   }
 }
 
