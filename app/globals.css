@@ -8,25 +8,25 @@
   --font-display: 'Manrope', system-ui, sans-serif;
   --font-body: 'Manrope', system-ui, sans-serif;
 
-  --color-bg: #FAFAFA;
-  --color-text: #0A0A0A;
+  --color-bg: #F7FAF9;
+  --color-text: #0B1220;
   --color-glass-bg: rgba(0, 0, 0, 0.03);
   --color-glass-border: rgba(0, 0, 0, 0.08);
   --color-card-bg: rgba(0, 0, 0, 0.02);
   --color-input-bg: rgba(0, 0, 0, 0.02);
-  --color-input-text: #0A0A0A;
+  --color-input-text: #0B1220;
   --color-input-placeholder: rgba(0, 0, 0, 0.35);
   --color-muted-text: rgba(0, 0, 0, 0.65);
-  --color-table-header: #1A1A1A;
-  --scrollbar-thumb: rgba(0, 0, 0, 0.35);
-  --aurora-image: radial-gradient(circle at 20% 20%, rgba(0,0,0,0.06), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(0,0,0,0.04), transparent 40%),
-    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.05), transparent 50%);
+  --color-table-header: #0B7A70;
+  --scrollbar-thumb: rgba(13, 148, 136, 0.35);
+  --aurora-image: radial-gradient(circle at 20% 20%, rgba(13,148,136,0.08), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(45,212,191,0.06), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(11,122,112,0.07), transparent 50%);
 }
 
 .dark {
-  --color-bg: #0A0A0A;
-  --color-text: #FAFAFA;
+  --color-bg: #050B12;
+  --color-text: #EAFFFB;
   --color-glass-bg: rgba(255, 255, 255, 0.04);
   --color-glass-border: rgba(255, 255, 255, 0.10);
   --color-card-bg: rgba(255, 255, 255, 0.03);
@@ -34,11 +34,11 @@
   --color-input-text: #ffffff;
   --color-input-placeholder: rgba(255, 255, 255, 0.3);
   --color-muted-text: rgba(255, 255, 255, 0.8);
-  --color-table-header: rgba(255, 255, 255, 0.85);
-  --scrollbar-thumb: rgba(255, 255, 255, 0.3);
-  --aurora-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.10), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(255,255,255,0.06), transparent 40%),
-    radial-gradient(circle at 50% 100%, rgba(255,255,255,0.08), transparent 50%);
+  --color-table-header: rgba(167, 254, 235, 0.7);
+  --scrollbar-thumb: rgba(45, 212, 191, 0.3);
+  --aurora-image: radial-gradient(circle at 20% 20%, rgba(45,212,191,0.16), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(167,254,235,0.10), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(13,148,136,0.14), transparent 50%);
 }
 
 html,
@@ -135,4 +135,17 @@ body {
     border-color: #ccc !important;
     box-shadow: none !important;
   }
+}
+
+/* --- Black & White toggle mode --- */
+.bw-mode {
+  --aurora-image: none !important;
+}
+.bw-mode.dark {
+  --color-bg: #0A0A0A !important;
+  --color-text: #FAFAFA !important;
+}
+.bw-mode:not(.dark) {
+  --color-bg: #FFFFFF !important;
+  --color-text: #0A0A0A !important;
 }
