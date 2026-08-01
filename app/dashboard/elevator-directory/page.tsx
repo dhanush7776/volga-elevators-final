@@ -730,13 +730,35 @@ export default function ElevatorDirectoryPage() {
       style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
     >
       <style>{`
+        @page {
+          size: landscape;
+          margin: 10mm;
+        }
         @media print {
           .no-print { display: none !important; }
           .screen-only { display: none !important; }
           .print-only { display: block !important; }
           body { background: white !important; }
-          table { color: black !important; }
-          th, td { color: black !important; border-color: #ccc !important; }
+          table {
+            color: black !important;
+            width: 100% !important;
+            table-layout: fixed !important;
+            border-collapse: collapse !important;
+            font-size: 8px !important;
+          }
+          th, td {
+            color: black !important;
+            border-color: #ccc !important;
+            padding: 3px 4px !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: unset !important;
+            max-width: none !important;
+            word-break: break-word !important;
+          }
+          th {
+            font-size: 8px !important;
+          }
         }
         .print-only { display: none; }
       `}</style>
