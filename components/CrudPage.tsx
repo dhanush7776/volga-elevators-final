@@ -48,7 +48,7 @@ function PhotoThumbnails({ paths }: { paths: string[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paths.join(',')]);
 
-  if (urls.length === 0) return <span className="text-xs text-white/30">Loading…</span>;
+  if (urls.length === 0) return <span className="text-xs" style={{ color: 'var(--color-muted-text)' }}>Loading…</span>;
 
   return (
     <div className="flex -space-x-2">
@@ -57,12 +57,16 @@ function PhotoThumbnails({ paths }: { paths: string[] }) {
           <img
             src={url}
             alt="Job photo"
-            className="h-8 w-8 rounded-md border border-white/20 object-cover transition-transform hover:z-10 hover:scale-150"
+            className="h-8 w-8 rounded-md border object-cover transition-transform hover:z-10 hover:scale-150"
+            style={{ borderColor: 'var(--color-glass-border)' }}
           />
         </a>
       ))}
       {urls.length > 3 && (
-        <span className="flex h-8 w-8 items-center justify-center rounded-md border border-white/20 bg-white/10 text-xs text-white/60">
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-md border text-xs"
+          style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-glass-bg)', color: 'var(--color-muted-text)' }}
+        >
           +{urls.length - 3}
         </span>
       )}
@@ -194,7 +198,7 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
     }
     if (raw === null || raw === undefined || raw === '') return '—';
     if (field.type === 'badge') {
-      const colorClass = field.badgeColors?.[raw] ?? 'bg-white/10 text-white/60 border-white/20';
+      const colorClass = field.badgeColors?.[raw] ?? 'bg-slate-500/15 text-slate-500 dark:text-slate-300 border-slate-500/30';
       return (
         <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${colorClass}`}>
           {String(raw).replace(/_/g, ' ')}
@@ -203,9 +207,9 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
     }
     if (field.type === 'checkbox') {
       return raw ? (
-        <span className="text-mint-300">Yes</span>
+        <span className="text-emerald-600 dark:text-mint-300">Yes</span>
       ) : (
-        <span className="text-white/30">No</span>
+        <span style={{ color: 'var(--color-muted-text)', opacity: 0.6 }}>No</span>
       );
     }
     if (field.type === 'currency') {
@@ -239,8 +243,8 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
     <div className="p-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-bold text-white">{moduleConfig.label}</h2>
-          <p className="text-sm text-white/40">{moduleConfig.description}</p>
+          <h2 className="font-display text-xl font-bold" style={{ color: 'var(--color-text)' }}>{moduleConfig.label}</h2>
+          <p className="text-sm" style={{ color: 'var(--color-muted-text)' }}>{moduleConfig.description}</p>
         </div>
         <div className="no-print flex items-center gap-2">
           <ExportMenu title={moduleConfig.label} columns={exportColumns} table={moduleConfig.table} currentFilterFn={() => buildQuery()} />
@@ -272,7 +276,7 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
 
       <div className="no-print mb-4 flex flex-wrap items-center gap-3">
         <div className="relative max-w-xs flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--color-input-placeholder)' }} />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -285,16 +289,17 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
             <Filter className="h-4 w-4" /> Filters {statusFilter && `(1)`}
           </button>
         )}
-        <span className="ml-auto text-xs text-white/40">
+        <span className="ml-auto text-xs" style={{ color: 'var(--color-muted-text)' }}>
           Showing {rows.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{(page - 1) * PAGE_SIZE + rows.length} of {total}
         </span>
       </div>
 
       {filtersOpen && statusField && (
-        <div className="no-print mb-4 flex flex-wrap gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <div className="no-print mb-4 flex flex-wrap gap-2 rounded-xl border p-3" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-glass-bg)' }}>
           <button
             onClick={() => setStatusFilter('')}
-            className={`rounded-full px-3 py-1 text-xs ${!statusFilter ? 'bg-mint-500/20 text-mint-300' : 'text-white/50 hover:bg-white/5'}`}
+            className={`rounded-full px-3 py-1 text-xs ${!statusFilter ? 'bg-mint-500/20 text-emerald-600 dark:text-mint-300' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+            style={!statusFilter ? undefined : { color: 'var(--color-muted-text)' }}
           >
             All
           </button>
@@ -303,8 +308,9 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
               key={opt.value}
               onClick={() => setStatusFilter(opt.value)}
               className={`rounded-full px-3 py-1 text-xs capitalize ${
-                statusFilter === opt.value ? 'bg-mint-500/20 text-mint-300' : 'text-white/50 hover:bg-white/5'
+                statusFilter === opt.value ? 'bg-mint-500/20 text-emerald-600 dark:text-mint-300' : 'hover:bg-black/5 dark:hover:bg-white/5'
               }`}
+              style={statusFilter === opt.value ? undefined : { color: 'var(--color-muted-text)' }}
             >
               {opt.label}
             </button>
@@ -316,7 +322,7 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
+              <tr className="border-b" style={{ borderColor: 'var(--color-glass-border)' }}>
                 {tableFields.map((f) => (
                   <th
                     key={f.key}
@@ -344,13 +350,13 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
               ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={tableFields.length + 1} className="py-16 text-center">
-                    <Inbox className="mx-auto mb-2 h-8 w-8 text-white/20" />
-                    <p className="text-sm text-white/40">No records found.</p>
+                    <Inbox className="mx-auto mb-2 h-8 w-8" style={{ color: 'var(--color-muted-text)', opacity: 0.4 }} />
+                    <p className="text-sm" style={{ color: 'var(--color-muted-text)' }}>No records found.</p>
                   </td>
                 </tr>
               ) : (
                 rows.map((row) => (
-                  <tr key={row.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
+                  <tr key={row.id} className="border-b last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]" style={{ borderColor: 'var(--color-glass-border)' }}>
                     {tableFields.map((f) => (
                       <td key={f.key} className="table-cell">
                         {renderCell(row, f)}
@@ -365,7 +371,8 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
                                 setEditingRow(row);
                                 setShowModal(true);
                               }}
-                              className="rounded-lg p-1.5 text-white/40 hover:bg-mint-500/10 hover:text-mint-300"
+                              className="rounded-lg p-1.5 hover:bg-mint-500/10 hover:text-emerald-600 dark:hover:text-mint-300"
+                              style={{ color: 'var(--color-muted-text)' }}
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
@@ -373,7 +380,8 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
                           {moduleConfig.canDelete && role === 'admin' && (
                             <button
                               onClick={() => setDeletingRow(row)}
-                              className="rounded-lg p-1.5 text-white/40 hover:bg-red-500/10 hover:text-red-400"
+                              className="rounded-lg p-1.5 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400"
+                              style={{ color: 'var(--color-muted-text)' }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -398,7 +406,7 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-sm text-white/50">
+          <span className="text-sm" style={{ color: 'var(--color-muted-text)' }}>
             Page {page} of {totalPages}
           </span>
           <button
@@ -427,8 +435,8 @@ export default function CrudPage({ moduleConfig }: { moduleConfig: ModuleConfig 
       {deletingRow && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="glass-panel w-full max-w-sm p-6">
-            <h3 className="mb-2 font-display text-lg font-bold text-white">Delete record?</h3>
-            <p className="mb-5 text-sm text-white/50">
+            <h3 className="mb-2 font-display text-lg font-bold" style={{ color: 'var(--color-text)' }}>Delete record?</h3>
+            <p className="mb-5 text-sm" style={{ color: 'var(--color-muted-text)' }}>
               This will remove the record from all lists and reports. This action can be reversed only by a database admin.
             </p>
             <div className="flex gap-3">
