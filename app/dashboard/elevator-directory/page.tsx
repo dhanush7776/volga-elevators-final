@@ -732,7 +732,7 @@ export default function ElevatorDirectoryPage() {
       <style>{`
         @page {
           size: landscape;
-          margin: 10mm;
+          margin: 6mm;
         }
         @media print {
           .no-print { display: none !important; }
@@ -742,22 +742,24 @@ export default function ElevatorDirectoryPage() {
           table {
             color: black !important;
             width: 100% !important;
-            table-layout: fixed !important;
+            table-layout: auto !important;
             border-collapse: collapse !important;
-            font-size: 8px !important;
+            font-size: 6.5px !important;
           }
           th, td {
             color: black !important;
             border-color: #ccc !important;
-            padding: 3px 4px !important;
+            padding: 2px 3px !important;
             white-space: normal !important;
             overflow: visible !important;
             text-overflow: unset !important;
             max-width: none !important;
             word-break: break-word !important;
+            line-height: 1.15 !important;
           }
           th {
-            font-size: 8px !important;
+            font-size: 6.5px !important;
+            font-weight: 700 !important;
           }
         }
         .print-only { display: none; }
