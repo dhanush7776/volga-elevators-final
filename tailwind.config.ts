@@ -11,22 +11,22 @@ const config: Config = {
     extend: {
       colors: {
         navy: {
-          950: '#050B12',
-          900: '#0A1420',
-          800: '#0F1E2E',
-          700: '#152A3D',
+          950: '#0A0A0A',
+          900: '#141414',
+          800: '#1F1F1F',
+          700: '#2A2A2A',
         },
         mint: {
-          50: '#EAFFFB',
-          100: '#D3FFF6',
-          200: '#A7FEEB',
-          300: '#6EF5DC',
-          400: '#2DD4BF',
-          500: '#14B8A6',
-          600: '#0D9488',
-          700: '#0B7A70',
-          800: '#0A5F58',
-          900: '#083F3B',
+          50: '#FAFAFA',
+          100: '#F0F0F0',
+          200: '#D9D9D9',
+          300: '#BFBFBF',
+          400: '#A0A0A0',
+          500: '#808080',
+          600: '#5C5C5C',
+          700: '#404040',
+          800: '#2A2A2A',
+          900: '#1A1A1A',
         },
       },
       fontFamily: {
@@ -35,12 +35,12 @@ const config: Config = {
       },
       backgroundImage: {
         'aurora-gradient':
-          'radial-gradient(circle at 20% 20%, rgba(45,212,191,0.16), transparent 45%), radial-gradient(circle at 80% 0%, rgba(167,254,235,0.10), transparent 40%), radial-gradient(circle at 50% 100%, rgba(13,148,136,0.14), transparent 50%)',
-        'mint-line': 'linear-gradient(90deg, #0D9488 0%, #2DD4BF 50%, #A7FEEB 100%)',
+          'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12), transparent 45%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.08), transparent 40%), radial-gradient(circle at 50% 100%, rgba(255,255,255,0.10), transparent 50%)',
+        'mint-line': 'linear-gradient(90deg, #404040 0%, #808080 50%, #D9D9D9 100%)',
       },
       boxShadow: {
         glass: '0 8px 32px 0 rgba(0,0,0,0.35)',
-        'glow-mint': '0 0 24px rgba(45,212,191,0.35)',
+        'glow-mint': '0 0 24px rgba(255,255,255,0.25)',
       },
       backdropBlur: {
         xs: '2px',
