@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { BwToggle } from '@/components/BwToggle';
 
 export default function Topbar({ title }: { title?: string }) {
   const { profile } = useAuth();
@@ -76,6 +77,7 @@ export default function Topbar({ title }: { title?: string }) {
 
       <div className="flex items-center gap-3">
         <ThemeToggle />
+        <BwToggle />
 
         <Link
           href="/dashboard/modules/notifications"
