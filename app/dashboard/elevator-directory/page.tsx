@@ -88,7 +88,7 @@ const IMPORT_TEMPLATE_HEADERS = [
   'status',
 ]
 
-const Dash = () => <span className="text-slate-600">—</span>
+const Dash = () => <span style={{ color: 'var(--color-muted-text)', opacity: 0.5 }}>—</span>
 
 function startOfDay(d: Date) {
   const x = new Date(d)
@@ -643,7 +643,10 @@ export default function ElevatorDirectoryPage() {
     return (
       <th
         onClick={() => toggleSort(column)}
-        className="px-4 py-3 font-medium cursor-pointer select-none hover:text-white transition-colors"
+        className="px-4 py-3 font-medium cursor-pointer select-none transition-colors"
+        style={{ color: 'var(--color-muted-text)' }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-text)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-muted-text)')}
       >
         <span className="flex items-center gap-1">
           {label}
@@ -659,21 +662,22 @@ export default function ElevatorDirectoryPage() {
       <tr
         key={r.key}
         onClick={sortableRowClick ? () => openCustomerDetail(r) : undefined}
-        className={`border-b border-white/5 hover:bg-white/[0.04] transition-colors ${
+        className={`border-b transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.04] ${
           sortableRowClick ? 'cursor-pointer' : ''
         }`}
+        style={{ borderColor: 'var(--color-glass-border)' }}
       >
-        <td className="px-4 py-3 text-slate-300">{r.code ?? <Dash />}</td>
-        <td className="px-4 py-3 text-white font-medium">{r.name}</td>
-        <td className="px-4 py-3 text-slate-300">{r.phone ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-300">{r.city ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.address ?? <Dash />}</td>
+        <td className="px-4 py-3" style={{ color: 'var(--color-muted-text)' }}>{r.code ?? <Dash />}</td>
+        <td className="px-4 py-3 font-medium" style={{ color: 'var(--color-text)' }}>{r.name}</td>
+        <td className="px-4 py-3" style={{ color: 'var(--color-muted-text)' }}>{r.phone ?? <Dash />}</td>
+        <td className="px-4 py-3" style={{ color: 'var(--color-muted-text)' }}>{r.city ?? <Dash />}</td>
+        <td className="px-4 py-3 max-w-[200px] truncate" style={{ color: 'var(--color-muted-text)' }}>{r.address ?? <Dash />}</td>
         <td className="px-4 py-3">
-          {r.active ? <span className="text-emerald-300">Yes</span> : <span className="text-slate-500">No</span>}
+          {r.active ? <span className="text-emerald-500 dark:text-emerald-300">Yes</span> : <span style={{ color: 'var(--color-muted-text)', opacity: 0.6 }}>No</span>}
         </td>
-        <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{r.notes ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-400">{r.last_service_date ?? <Dash />}</td>
-        <td className="px-4 py-3 text-slate-400">{r.next_service_due ?? <Dash />}</td>
+        <td className="px-4 py-3 max-w-[200px] truncate" style={{ color: 'var(--color-muted-text)' }}>{r.notes ?? <Dash />}</td>
+        <td className="px-4 py-3" style={{ color: 'var(--color-muted-text)' }}>{r.last_service_date ?? <Dash />}</td>
+        <td className="px-4 py-3" style={{ color: 'var(--color-muted-text)' }}>{r.next_service_due ?? <Dash />}</td>
         <td className="px-4 py-3">
           <span className={`inline-block px-2.5 py-1 rounded-full text-xs border capitalize ${PAYMENT_STATUS_COLORS[r.payment_status] ?? 'bg-slate-500/15 text-slate-300 border-slate-500/30'}`}>
             {r.payment_status}
@@ -684,14 +688,16 @@ export default function ElevatorDirectoryPage() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => openEditCustomer(r)}
-                className="rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-[#A7FEEB] transition-colors"
+                className="rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/5 hover:text-emerald-500 dark:hover:text-[#A7FEEB] transition-colors"
+                style={{ color: 'var(--color-muted-text)' }}
                 title="Edit customer"
               >
                 <Pencil size={14} />
               </button>
               <button
                 onClick={() => handleDeleteCustomer(r)}
-                className="rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-rose-400 transition-colors"
+                className="rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/5 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+                style={{ color: 'var(--color-muted-text)' }}
                 title="Delete customer"
               >
                 <Trash2 size={14} />
@@ -704,7 +710,7 @@ export default function ElevatorDirectoryPage() {
   }
 
   const printHeaderCells = (
-    <tr className="border-b border-white/10 text-left text-slate-400">
+    <tr className="border-b text-left" style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-muted-text)' }}>
       <th className="px-4 py-3 font-medium">Code</th>
       <th className="px-4 py-3 font-medium">Name</th>
       <th className="px-4 py-3 font-medium">Phone</th>
@@ -719,7 +725,10 @@ export default function ElevatorDirectoryPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0a0e14] text-slate-100 p-6 print:bg-white print:text-black">
+    <div
+      className="min-h-screen p-6 print:bg-white print:text-black"
+      style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+    >
       <style>{`
         @media print {
           .no-print { display: none !important; }
@@ -734,10 +743,16 @@ export default function ElevatorDirectoryPage() {
 
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white print:text-black">
+          <h1
+            className="text-2xl font-semibold tracking-tight print:text-black"
+            style={{ color: 'var(--color-text)' }}
+          >
             Elevator Directory
           </h1>
-          <p className="text-sm text-slate-400 mt-1 print:text-black">
+          <p
+            className="text-sm mt-1 print:text-black"
+            style={{ color: 'var(--color-muted-text)' }}
+          >
             Customer, site, and elevator details in one table
           </p>
         </div>
@@ -752,7 +767,7 @@ export default function ElevatorDirectoryPage() {
 
           <button
             onClick={() => setImportOpen(true)}
-            className="px-4 py-2 rounded-xl text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+            className="btn-secondary px-4 py-2 rounded-xl text-sm"
           >
             Import
           </button>
@@ -760,16 +775,27 @@ export default function ElevatorDirectoryPage() {
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen((v) => !v)}
-              className="px-4 py-2 rounded-xl text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+              className="btn-secondary px-4 py-2 rounded-xl text-sm"
             >
               Export
             </button>
             {exportMenuOpen && (
-              <div className="absolute right-0 mt-2 w-40 rounded-xl border border-white/10 bg-[#111621] shadow-xl z-10 overflow-hidden">
-                <button onClick={handleExportExcel} className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5">
+              <div
+                className="absolute right-0 mt-2 w-40 rounded-xl border shadow-xl z-10 overflow-hidden backdrop-blur-xl"
+                style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-bg)' }}
+              >
+                <button
+                  onClick={handleExportExcel}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{ color: 'var(--color-text)' }}
+                >
                   Export as Excel
                 </button>
-                <button onClick={handleExportCSV} className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5">
+                <button
+                  onClick={handleExportCSV}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5"
+                  style={{ color: 'var(--color-text)' }}
+                >
                   Export as CSV
                 </button>
               </div>
@@ -790,12 +816,12 @@ export default function ElevatorDirectoryPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, code, phone, email, city, model…"
-          className="flex-1 bg-white/5 border border-white/10 backdrop-blur-md rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+          className="input-field flex-1 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#A7FEEB]/40"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-white/5 border border-white/10 backdrop-blur-md rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+          className="input-field rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#A7FEEB]/40"
         >
           <option value="all">All statuses</option>
           <option value="operational">Operational</option>
@@ -805,11 +831,14 @@ export default function ElevatorDirectoryPage() {
         </select>
       </div>
 
-      <div className="screen-only rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden">
+      <div
+        className="screen-only rounded-2xl border backdrop-blur-xl overflow-hidden"
+        style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card-bg)' }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-sm whitespace-nowrap">
             <thead>
-              <tr className="border-b border-white/10 text-left text-slate-400">
+              <tr className="border-b text-left" style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-muted-text)' }}>
                 <SortHeader label="Code" column="code" />
                 <SortHeader label="Name" column="name" />
                 <SortHeader label="Phone" column="phone" />
@@ -826,11 +855,11 @@ export default function ElevatorDirectoryPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-8 text-center text-slate-500">Loading…</td>
+                  <td colSpan={11} className="px-4 py-8 text-center" style={{ color: 'var(--color-muted-text)' }}>Loading…</td>
                 </tr>
               ) : sortedFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-8 text-center text-slate-500">No rows match your search.</td>
+                  <td colSpan={11} className="px-4 py-8 text-center" style={{ color: 'var(--color-muted-text)' }}>No rows match your search.</td>
                 </tr>
               ) : (
                 renderTableRows(sortedFiltered, true)
@@ -840,7 +869,7 @@ export default function ElevatorDirectoryPage() {
         </div>
       </div>
 
-      <div className="mt-3 text-xs text-slate-500 no-print">
+      <div className="mt-3 text-xs no-print" style={{ color: 'var(--color-muted-text)' }}>
         {filtered.length} row{filtered.length !== 1 ? 's' : ''} · tap a customer to view details, tap a column to sort
       </div>
 
@@ -858,23 +887,27 @@ export default function ElevatorDirectoryPage() {
 
       {importOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1119] p-6">
+          <div
+            className="w-full max-w-lg rounded-2xl border p-6 backdrop-blur-xl"
+            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-bg)' }}
+          >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Import Data</h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Import Data</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-muted-text)' }}>
                   Upload a .xlsx or .csv file. Matches existing customers by name.
                 </p>
               </div>
               <button
                 onClick={() => { setImportOpen(false); setImportSummary(null) }}
-                className="text-slate-400 hover:text-white"
+                className="hover:opacity-70"
+                style={{ color: 'var(--color-muted-text)' }}
               >
                 ✕
               </button>
             </div>
 
-            <button onClick={handleDownloadTemplate} className="text-sm text-[#A7FEEB] hover:underline mb-4">
+            <button onClick={handleDownloadTemplate} className="text-sm text-emerald-600 dark:text-[#A7FEEB] hover:underline mb-4">
               Download import template
             </button>
 
@@ -884,21 +917,25 @@ export default function ElevatorDirectoryPage() {
               accept=".xlsx,.xls,.csv"
               onChange={onFileSelected}
               disabled={importing}
-              className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#A7FEEB]/15 file:text-[#A7FEEB] hover:file:bg-[#A7FEEB]/25"
+              className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#A7FEEB]/15 file:text-emerald-600 dark:file:text-[#A7FEEB] hover:file:bg-[#A7FEEB]/25"
+              style={{ color: 'var(--color-muted-text)' }}
             />
 
-            {importing && <p className="mt-4 text-sm text-slate-400">Importing… this may take a moment.</p>}
+            {importing && <p className="mt-4 text-sm" style={{ color: 'var(--color-muted-text)' }}>Importing… this may take a moment.</p>}
 
             {importSummary && (
-              <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
-                <p className="text-white mb-1">
+              <div
+                className="mt-4 rounded-xl border p-4 text-sm"
+                style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card-bg)' }}
+              >
+                <p className="mb-1" style={{ color: 'var(--color-text)' }}>
                   ✅ {importSummary.customersCreated} customers created, {importSummary.buildingsCreated} buildings created,{' '}
                   {importSummary.elevatorsCreated} elevators created.
                 </p>
                 {importSummary.errors.length > 0 && (
                   <div className="mt-2">
-                    <p className="text-rose-400 mb-1">{importSummary.errors.length} row(s) had issues:</p>
-                    <ul className="text-xs text-rose-300 max-h-32 overflow-y-auto list-disc pl-4 space-y-0.5">
+                    <p className="text-rose-500 dark:text-rose-400 mb-1">{importSummary.errors.length} row(s) had issues:</p>
+                    <ul className="text-xs text-rose-500 dark:text-rose-300 max-h-32 overflow-y-auto list-disc pl-4 space-y-0.5">
                       {importSummary.errors.map((e, i) => <li key={i}>{e}</li>)}
                     </ul>
                   </div>
@@ -911,30 +948,33 @@ export default function ElevatorDirectoryPage() {
 
       {printOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 no-print p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1119] p-6">
+          <div
+            className="w-full max-w-md rounded-2xl border p-6 backdrop-blur-xl"
+            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-bg)' }}
+          >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Print Elevator Directory</h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Print Elevator Directory</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-muted-text)' }}>
                   Choose which date to filter by, and the range to print.
                 </p>
               </div>
-              <button onClick={() => setPrintOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setPrintOpen(false)} className="hover:opacity-70" style={{ color: 'var(--color-muted-text)' }}>
                 ✕
               </button>
             </div>
 
-            <label className="block text-xs text-slate-400 mb-1">Filter by</label>
+            <label className="block text-xs mb-1" style={{ color: 'var(--color-muted-text)' }}>Filter by</label>
             <select
               value={printDateField}
               onChange={(e) => setPrintDateField(e.target.value as any)}
-              className="w-full mb-4 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+              className="input-field w-full mb-4 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#A7FEEB]/40"
             >
               <option value="next_service_due">Next Service Due</option>
               <option value="last_service_date">Last Service Date</option>
             </select>
 
-            <label className="block text-xs text-slate-400 mb-1">Range</label>
+            <label className="block text-xs mb-1" style={{ color: 'var(--color-muted-text)' }}>Range</label>
             <div className="grid grid-cols-2 gap-2 mb-4">
               {PRESET_OPTIONS.map((p) => (
                 <button
@@ -942,9 +982,14 @@ export default function ElevatorDirectoryPage() {
                   onClick={() => setPrintPreset(p.value)}
                   className={`px-3 py-2 rounded-xl text-sm border transition-colors ${
                     printPreset === p.value
-                      ? 'bg-[#A7FEEB]/15 border-[#A7FEEB]/40 text-[#A7FEEB]'
-                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                      ? 'bg-[#A7FEEB]/15 border-[#A7FEEB]/40 text-emerald-600 dark:text-[#A7FEEB]'
+                      : 'hover:bg-black/5 dark:hover:bg-white/10'
                   }`}
+                  style={
+                    printPreset === p.value
+                      ? undefined
+                      : { backgroundColor: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)', color: 'var(--color-muted-text)' }
+                  }
                 >
                   {p.label}
                 </button>
@@ -954,21 +999,21 @@ export default function ElevatorDirectoryPage() {
             {printPreset === 'custom' && (
               <div className="grid grid-cols-2 gap-2 mb-4">
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Start date</label>
+                  <label className="block text-xs mb-1" style={{ color: 'var(--color-muted-text)' }}>Start date</label>
                   <input
                     type="date"
                     value={printCustomStart}
                     onChange={(e) => setPrintCustomStart(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+                    className="input-field w-full rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#A7FEEB]/40"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">End date</label>
+                  <label className="block text-xs mb-1" style={{ color: 'var(--color-muted-text)' }}>End date</label>
                   <input
                     type="date"
                     value={printCustomEnd}
                     onChange={(e) => setPrintCustomEnd(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A7FEEB]/40"
+                    className="input-field w-full rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#A7FEEB]/40"
                   />
                 </div>
               </div>
